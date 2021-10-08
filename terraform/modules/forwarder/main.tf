@@ -53,11 +53,11 @@ resource "kubernetes_service" "this" {
       "aws-con.service.kubernetes.io/pre-commands" = jsonencode([
         {
           id      = "check-db"
-          command = "[\"sh\", \"-c\", \"aws rds describe-db-instances --db-instance-identifier ${var.identifier}\"]",
+          command = jsonencode(split(" ", "aws rds describe-db-instances --db-instance-identifier ${var.identifier}"))
         },
         {
           id      = "auth-token"
-          command = "[\"sh\", \"-c\", \"aws rds generate-db-auth-token --host ${var.host} --port ${var.port} --username {{ .username }}\"]"
+          command = jsonencode(split(" ", "aws rds generate-db-auth-token --host ${var.host} --port ${var.port} --username {{.username}}"))
         }
       ])
       "aws-con.service.kubernetes.io/post-commands" = jsonencode([

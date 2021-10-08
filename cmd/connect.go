@@ -96,9 +96,12 @@ func NewConnectCommand() *cobra.Command {
 				}
 			}
 
-			localPort, err := freeport.GetFreePort()
-			if err != nil {
-				return err
+			localPort, _ := flags.GetInt("local-port")
+			if localPort == 0 {
+				localPort, err = freeport.GetFreePort()
+				if err != nil {
+					return err
+				}
 			}
 
 			options["localPort"] = localPort
@@ -156,7 +159,7 @@ func NewConnectCommand() *cobra.Command {
 
 	clientcmd.BindOverrideFlags(&overrides, cmd.PersistentFlags(), clientcmd.RecommendedConfigOverrideFlags(""))
 	cmd.Flags().String("db-user", "", "DB user")
-	cmd.Flags().Bool("open", false, "Whether to call the linux open on the database connection string")
+	cmd.Flags().Int("local-port", 0, "Local port")
 
 	return cmd
 }
