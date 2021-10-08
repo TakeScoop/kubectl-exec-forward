@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 
 	"github.com/phayes/freeport"
@@ -72,18 +73,19 @@ func NewConnectCommand() *cobra.Command {
 				}
 			}
 
-			var options map[string]interface{}
-
-			annoDefaults, ok := service.Annotations[fmt.Sprintf("%s/defaults", annotation)]
-			if !ok {
-				options = map[string]interface{}{}
-			} else {
-				if err := json.Unmarshal([]byte(annoDefaults), &options); err != nil {
-					return err
-				}
+			options := command.Options{
+				Pre:    map[string]string{},
+				Config: map[string]string{},
 			}
 
-			options["Pre"] = map[string]interface{}{}
+			annoDefaults, ok := service.Annotations[fmt.Sprintf("%s/defaults", annotation)]
+			if ok {
+				var cfg map[string]string
+				if err := json.Unmarshal([]byte(annoDefaults), &cfg); err != nil {
+					return err
+				}
+				options.Config = cfg
+			}
 
 			var postCommands []command.Command
 
@@ -98,17 +100,23 @@ func NewConnectCommand() *cobra.Command {
 
 			localPort, _ := flags.GetInt("local-port")
 			if localPort == 0 {
-				localPort, err = freeport.GetFreePort()
-				if err != nil {
-					return err
+				p, ok := options.Config["localport"]
+				if ok {
+					localPort, err = strconv.Atoi(p)
+					if err != nil {
+						localPort, err = freeport.GetFreePort()
+						if err != nil {
+							return err
+						}
+					}
 				}
 			}
 
-			options["localPort"] = localPort
+			options.Config["localport"] = strconv.Itoa(localPort)
 
 			user, _ := flags.GetString("db-user")
 			if user != "" {
-				options["username"] = user
+				options.Config["username"] = user
 			}
 
 			for _, c := range preCommands {
@@ -122,7 +130,7 @@ func NewConnectCommand() *cobra.Command {
 					return fmt.Errorf("failed to execute command %s:%s", c.ID, c.Command)
 				}
 
-				options["Pre"].(map[string]interface{})[c.ID] = stdout.String()
+				options.Pre[c.ID] = stdout.String()
 			}
 
 			sigChan := make(chan os.Signal, 1)

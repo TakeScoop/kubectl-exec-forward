@@ -48,22 +48,23 @@ resource "kubernetes_service" "this" {
     namespace = var.namespace
     annotations = {
       "aws-con.service.kubernetes.io/defaults" : jsonencode({
-        username = "iam_read",
+        username  = "iam_read",
+        localport = "8080"
       })
       "aws-con.service.kubernetes.io/pre-commands" = jsonencode([
         {
-          id      = "check-db"
+          id      = "check"
           command = jsonencode(split(" ", "aws rds describe-db-instances --db-instance-identifier ${var.identifier}"))
         },
         {
-          id      = "auth-token"
-          command = jsonencode(split(" ", "aws rds generate-db-auth-token --host ${var.host} --port ${var.port} --username {{.username}}"))
+          id      = "token"
+          command = jsonencode(split(" ", "aws rds generate-db-auth-token --host ${var.host} --port ${var.port} --username {{.Config.username}}"))
         }
       ])
       "aws-con.service.kubernetes.io/post-commands" = jsonencode([
         {
           id      = "open"
-          command = "[\"open\", \"${var.scheme}://{{ .username }}:{{ urlquery (trim (index .Pre \"auth-token\" )) }}@localhost:{{ .localPort }}/${var.db_name}\"]"
+          command = "[\"open\", \"${var.scheme}://{{ .Config.username }}:{{ urlquery (trim .Pre.token) }}@localhost:{{ .Config.localport }}/${var.db_name}\"]"
         },
       ])
     }

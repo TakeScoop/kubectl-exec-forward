@@ -13,6 +13,24 @@ type Command struct {
 	Command string `json:"command"`
 }
 
+type Options struct {
+	Pre    map[string]string
+	Config map[string]string
+}
+
+func (o Options) ToInterface() (inter map[string]interface{}, err error) {
+	b, err := json.Marshal(o)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := json.Unmarshal(b, &inter); err != nil {
+		return nil, err
+	}
+
+	return inter, nil
+}
+
 func (c Command) template(options map[string]interface{}) (string, error) {
 	tpl := template.Must(template.New(c.ID).Funcs(template.FuncMap{
 		"trim": strings.TrimSpace,
@@ -27,8 +45,13 @@ func (c Command) template(options map[string]interface{}) (string, error) {
 	return out.String(), nil
 }
 
-func (c Command) Execute(options map[string]interface{}) (stdout *bytes.Buffer, stderr *bytes.Buffer, err error) {
-	command, err := c.template(options)
+func (c Command) Execute(options Options) (stdout *bytes.Buffer, stderr *bytes.Buffer, err error) {
+	inter, err := options.ToInterface()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	command, err := c.template(inter)
 	if err != nil {
 		return nil, nil, err
 	}
