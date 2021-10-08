@@ -7,4 +7,6 @@ module "forwarder" {
   port          = 5432
   allowed_users = ["iam_read", "iam_read_write"]
   identifier    = "scoop-dev1-harbormaster-db"
+  scheme        = "postgres"
+  db_name       = "harbormasterDb"
 }

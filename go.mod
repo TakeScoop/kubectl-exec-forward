@@ -3,11 +3,7 @@ module github.com/takescoop/service-connect
 go 1.16
 
 require (
-	github.com/aws/aws-sdk-go-v2 v1.9.1
-	github.com/aws/aws-sdk-go-v2/config v1.8.2
-	github.com/aws/aws-sdk-go-v2/feature/rds/auth v1.1.7
-	github.com/aws/aws-sdk-go-v2/service/rds v1.9.0
-	github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi v1.5.1
+	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/phayes/freeport v0.0.0-20180830031419-95f893ade6f2
 	github.com/spf13/cobra v1.1.3
 	k8s.io/api v0.22.2

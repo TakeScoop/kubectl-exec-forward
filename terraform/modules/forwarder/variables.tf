@@ -21,3 +21,11 @@ variable "identifier" {
 variable "allowed_users" {
   type = set(string)
 }
+
+variable "scheme" {
+  type = string
+}
+
+variable "db_name" {
+  type = string
+}

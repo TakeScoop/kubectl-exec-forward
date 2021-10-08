@@ -4,17 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/url"
 	"os"
 	"os/signal"
 	"syscall"
 
-	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/phayes/freeport"
 	"github.com/spf13/cobra"
+	"github.com/takescoop/service-connect/pkg/command"
 	"github.com/takescoop/service-connect/pkg/forwarder"
-	"github.com/takescoop/service-connect/pkg/open"
-	"github.com/takescoop/service-connect/pkg/rds"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -25,6 +22,8 @@ type Spec struct {
 	LocalHost string
 	LocalPort int
 }
+
+var annotation string = "aws-con.service.kubernetes.io"
 
 func NewConnectCommand() *cobra.Command {
 	overrides := clientcmd.ConfigOverrides{}
@@ -62,27 +61,39 @@ func NewConnectCommand() *cobra.Command {
 				return err
 			}
 
-			annoType, ok := service.Annotations["aws-con.service.kubernetes.io/type"]
+			var preCommands []command.Command
+
+			annoPreCommands, ok := service.Annotations[fmt.Sprintf("%s/pre-commands", annotation)]
 			if !ok {
-				return fmt.Errorf("aws-con.service.kubernetes.io/type not found")
+				preCommands = []command.Command{}
+			} else {
+				if err := json.Unmarshal([]byte(annoPreCommands), &preCommands); err != nil {
+					return err
+				}
 			}
 
-			annoMeta, ok := service.Annotations["aws-con.service.kubernetes.io/meta"]
+			var options map[string]interface{}
+
+			annoDefaults, ok := service.Annotations[fmt.Sprintf("%s/defaults", annotation)]
 			if !ok {
-				return fmt.Errorf("aws-con.service.kubernetes.io/meta not found")
+				options = map[string]interface{}{}
+			} else {
+				if err := json.Unmarshal([]byte(annoDefaults), &options); err != nil {
+					return err
+				}
 			}
 
-			config, err := config.LoadDefaultConfig(ctx)
-			if err != nil {
-				return err
-			}
+			options["Pre"] = map[string]interface{}{}
 
-			sigChan := make(chan os.Signal, 1)
-			signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+			var postCommands []command.Command
 
-			handlers := forwarder.Handlers{
-				OnReady: nil,
-				OnStop:  func() { <-sigChan },
+			annoPostCommands, ok := service.Annotations[fmt.Sprintf("%s/post-commands", annotation)]
+			if !ok {
+				postCommands = []command.Command{}
+			} else {
+				if err := json.Unmarshal([]byte(annoPostCommands), &postCommands); err != nil {
+					return err
+				}
 			}
 
 			localPort, err := freeport.GetFreePort()
@@ -90,43 +101,53 @@ func NewConnectCommand() *cobra.Command {
 				return err
 			}
 
-			switch annoType {
-			case "rds-iam":
-				var meta *rds.Meta
-				err := json.Unmarshal([]byte(annoMeta), &meta)
+			options["localPort"] = localPort
+
+			user, _ := flags.GetString("db-user")
+			if user != "" {
+				options["username"] = user
+			}
+
+			for _, c := range preCommands {
+				stdout, stderr, err := c.Execute(options)
 				if err != nil {
 					return err
 				}
 
-				dbUser, _ := flags.GetString("db-user")
-
-				client := rds.New(config.Region, config)
-
-				dbAuth, err := client.GetDBCredentials(ctx, meta, dbUser)
-				if err != nil {
-					return err
+				if stderr.Len() > 0 {
+					fmt.Println(stderr.String())
+					return fmt.Errorf("failed to execute command %s:%s", c.ID, c.Command)
 				}
 
-				dbURL := url.URL{
-					Scheme: dbAuth.Scheme,
-					Host:   fmt.Sprintf("localhost:%d", localPort),
-					User:   url.UserPassword(dbUser, dbAuth.Password),
-					Path:   dbAuth.DBName,
-				}
-				conn := dbURL.String()
+				options["Pre"].(map[string]interface{})[c.ID] = stdout.String()
+			}
 
-				callOpen, _ := flags.GetBool("open")
+			sigChan := make(chan os.Signal, 1)
+			signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
-				handlers.OnReady = func() {
-					fmt.Println(conn)
-					if callOpen {
-						open.Open(conn)
+			errChan := make(chan error)
+
+			handlers := forwarder.Handlers{
+				OnReady: func() {
+					for _, c := range postCommands {
+						stdout, stderr, err := c.Execute(options)
+						if err != nil {
+							errChan <- err
+						}
+
+						if stderr.Len() > 0 {
+							fmt.Println(stderr.String())
+							errChan <- fmt.Errorf("failed to execute command %s:%s", c.ID, c.Command)
+						}
+
+						fmt.Println(stdout.String())
 					}
-				}
+				},
+				OnStop: func() { <-sigChan },
+			}
 
-				if err = forwarder.Forward(clientset, restConfig, service, localPort, dbAuth.Port, handlers); err != nil {
-					return err
-				}
+			if err = forwarder.Forward(clientset, restConfig, service, localPort, handlers); err != nil {
+				return err
 			}
 
 			return nil

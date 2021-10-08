@@ -31,7 +31,8 @@ func dialer(k kubernetes.Clientset, config *rest.Config, namespace string, pod s
 	return spdy.NewDialer(upgrader, &http.Client{Transport: transport}, "POST", k.RESTClient().Post().Prefix("api/v1").Resource("pods").Namespace(namespace).Name(pod).SubResource("portforward").URL()), nil
 }
 
-func Forward(k *kubernetes.Clientset, config *rest.Config, service *v1.Service, localPort int, remotePort int, handlers Handlers) error {
+func Forward(k *kubernetes.Clientset, config *rest.Config, service *v1.Service, localPort int, handlers Handlers) error {
+
 	namespace, selector, err := helpers.SelectorsForObject(service)
 	if err != nil {
 		return err
@@ -61,7 +62,7 @@ func Forward(k *kubernetes.Clientset, config *rest.Config, service *v1.Service, 
 		stopChan <- struct{}{}
 	}()
 
-	pf, err := portforward.New(dialer, []string{fmt.Sprintf("%d:%d", localPort, remotePort)}, stopChan, readyChan, os.Stdout, os.Stderr)
+	pf, err := portforward.New(dialer, []string{fmt.Sprintf("%d:%s", localPort, &service.Spec.Ports[0].TargetPort)}, stopChan, readyChan, os.Stdout, os.Stderr)
 	if err != nil {
 		return err
 	}
