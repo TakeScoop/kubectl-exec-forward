@@ -13,3 +13,11 @@ variable "name" {
 variable "namespace" {
   type = string
 }
+
+variable "identifier" {
+  type = string
+}
+
+variable "allowed_users" {
+  type = set(string)
+}
