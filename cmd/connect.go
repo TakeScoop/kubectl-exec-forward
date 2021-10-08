@@ -30,8 +30,8 @@ func NewConnectCommand() *cobra.Command {
 	overrides := clientcmd.ConfigOverrides{}
 
 	cmd := &cobra.Command{
-		Use:   "service-connect svc [flags]",
-		Short: "Manage connections to different services",
+		Use:   "kubectl aws-connect svc [flags]",
+		Short: "Manage connections to different AWS services",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := context.Background()
