@@ -1,13 +1,20 @@
 package forwarder
 
 import (
-	"context"
+	"fmt"
+	"net/http"
 	"os"
+	"sort"
+	"time"
 
-	"github.com/bendrucker/kubernetes-port-forward-remote/pkg/forward"
-	"k8s.io/cli-runtime/pkg/genericclioptions"
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/httpstream"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/portforward"
+	"k8s.io/client-go/transport/spdy"
+	helpers "k8s.io/kubectl/pkg/polymorphichelpers"
+	"k8s.io/kubectl/pkg/util/podutils"
 )
 
 type Handlers struct {
@@ -15,61 +22,49 @@ type Handlers struct {
 	OnStop  func()
 }
 
-func Forward(ctx context.Context, host string, port int, localPort int, h *Handlers) error {
-	streams := genericclioptions.IOStreams{
-		In:     os.Stdin,
-		Out:    os.Stdout,
-		ErrOut: os.Stderr,
+func dialer(k kubernetes.Clientset, config *rest.Config, namespace string, pod string) (httpstream.Dialer, error) {
+	transport, upgrader, err := spdy.RoundTripperFor(config)
+	if err != nil {
+		return nil, err
 	}
 
-	overrides := clientcmd.ConfigOverrides{}
+	return spdy.NewDialer(upgrader, &http.Client{Transport: transport}, "POST", k.RESTClient().Post().Prefix("api/v1").Resource("pods").Namespace(namespace).Name(pod).SubResource("portforward").URL()), nil
+}
 
-	kc := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
-		clientcmd.NewDefaultClientConfigLoadingRules(),
-		&overrides,
-	)
-
-	config, err := kc.ClientConfig()
+func Forward(k *kubernetes.Clientset, config *rest.Config, service *v1.Service, localPort int, remotePort int, handlers Handlers) error {
+	namespace, selector, err := helpers.SelectorsForObject(service)
 	if err != nil {
 		return err
 	}
 
-	clientset, err := kubernetes.NewForConfig(config)
+	sortBy := func(pods []*v1.Pod) sort.Interface { return podutils.ByLogging(pods) }
+
+	pod, _, err := helpers.GetFirstPod(k.CoreV1(), namespace, selector.String(), time.Duration(time.Second*30), sortBy)
 	if err != nil {
 		return err
 	}
 
-	spec := forward.Spec{
-		LocalPort:  localPort,
-		RemoteHost: host,
-		RemotePort: port,
-	}
-
-	ns, _, _ := kc.Namespace()
-	forwarder := forward.Forwarder{
-		Namespace: ns,
-		Client:    clientset,
-		Config:    config,
-		IOStreams: streams,
+	dialer, err := dialer(*k, config, service.Namespace, pod.Name)
+	if err != nil {
+		return err
 	}
 
 	readyChan := make(chan struct{})
 	go func() {
 		<-readyChan
-		h.OnReady()
+		handlers.OnReady()
 	}()
 
 	stopChan := make(chan struct{})
 	go func() {
-		h.OnStop()
+		handlers.OnStop()
 		stopChan <- struct{}{}
 	}()
 
-	err = forwarder.Forward(ctx, spec, stopChan, readyChan)
+	pf, err := portforward.New(dialer, []string{fmt.Sprintf("%d:%d", localPort, remotePort)}, stopChan, readyChan, os.Stdout, os.Stderr)
 	if err != nil {
-		stopChan <- struct{}{}
 		return err
 	}
 
-	return nil
+	return pf.ForwardPorts()
 }
