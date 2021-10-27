@@ -1,0 +1,12 @@
+_extends: .github
+repository:
+  name: kubectl-service-port-forward
+  description: A kubectl plugin used to port forward to a service and run commands listed via the service's annotation
+  topics: kubernetes, kubectl
+  allow_auto_merge: true
+branches:
+  - name: master
+    protection:
+      required_status_checks:
+        contexts:
+          - default
