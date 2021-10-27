@@ -1,3 +1,3 @@
-# kubectl-service-port-forward
+# kubectl-port-forward-hooks
 
-A kubectl plugin used to port forward to a Kubernetes Service and run commands listed in the Service's annotations
+A kubectl plugin to execute hooks exposed by a Kubernetes resource around a port-forwarding action.

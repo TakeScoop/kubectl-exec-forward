@@ -1,3 +1,3 @@
-module github.com/takescoop/kubectl-service-port-forward
+module github.com/takescoop/kubectl-port-forward-hooks
 
 go 1.16
