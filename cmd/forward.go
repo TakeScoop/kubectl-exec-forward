@@ -13,7 +13,7 @@ import (
 	"github.com/takescoop/kubectl-port-forward-hooks/internal/command"
 	"github.com/takescoop/kubectl-port-forward-hooks/internal/kubernetes"
 
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
@@ -38,7 +38,7 @@ func NewForwardCommand() *cobra.Command {
 			}
 
 			// TODO: handle Kubernetes resources other than service
-			service, err := client.GetService(ctx, args[0], &v1.GetOptions{})
+			service, err := client.GetService(ctx, args[0], &v1meta.GetOptions{})
 			if err != nil {
 				return err
 			}
