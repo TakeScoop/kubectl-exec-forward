@@ -1,16 +1,16 @@
 package command
 
 import (
-	"fmt"
+	"encoding/json"
 	"log"
 )
 
 type Commands []*Command
 
 // Execute runs each command in the calling slice sequentially using the passed config and the outputs accumulated to that point
-func (c Commands) Execute(config *Config, outputs *Outputs) error {
+func (c Commands) Execute(config *Config, arguments *Args, outputs *Outputs) error {
 	for _, command := range c {
-		stdout, stderr, err := command.Execute(config, outputs)
+		stdout, stderr, err := command.Execute(config, arguments, outputs)
 		if err != nil {
 			return err
 		}
@@ -22,9 +22,20 @@ func (c Commands) Execute(config *Config, outputs *Outputs) error {
 		}
 
 		(*outputs)[command.ID] = stdout.String()
-
-		fmt.Println((*outputs)[command.ID])
 	}
 
 	return nil
+}
+
+func ParseCommands(annotations map[string]string, target string) (commands Commands, err error) {
+	v, ok := annotations[target]
+	if !ok {
+		return commands, nil
+	}
+
+	if err := json.Unmarshal([]byte(v), &commands); err != nil {
+		return nil, err
+	}
+
+	return commands, err
 }

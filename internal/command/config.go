@@ -1,31 +1,30 @@
 package command
 
-import (
-	"fmt"
-	"strconv"
-)
+import "encoding/json"
 
-type Config map[string]interface{}
+type Config struct {
+	LocalPort int `json:"local_port"`
+}
 
-// GetInt returns the value at the passed key as an int, 0 if its not found
-func (c Config) GetInt(key string) (int, error) {
-	val, ok := c[key]
+func ParseConfig(annotations map[string]string, overrides *Config) (config *Config, err error) {
+	v, ok := annotations[configAnnotation]
 	if !ok {
-		return 0, nil
+		return config, nil
 	}
 
-	if num, ok := val.(float64); ok {
-		return int(num), nil
-
+	if err := json.Unmarshal([]byte(v), &config); err != nil {
+		return nil, err
 	}
 
-	if numStr, ok := val.(string); ok {
-		num64, err := strconv.ParseInt(numStr, 10, 64)
-		if err != nil {
-			return 0, err
-		}
-		return int(num64), nil
+	if overrides != nil {
+		config.addOverrides(overrides)
 	}
 
-	return 0, fmt.Errorf("failed to convert %s to int: %v", key, val)
+	return config, nil
+}
+
+func (c *Config) addOverrides(override *Config) {
+	if override.LocalPort > 0 {
+		c.LocalPort = override.LocalPort
+	}
 }

@@ -20,12 +20,6 @@ type Client struct {
 	namespace string
 }
 
-// Forward opens a connection to the passed service
-func (c Client) Forward(svc *v1.Service, localPort int, handlers *Handlers) error {
-	// TODO: implement the port forward
-	return nil
-}
-
 // New returns an uninitialized Kubernetes client
 func New(overrides *clientcmd.ConfigOverrides) *Client {
 	return &Client{

@@ -1,15 +1,13 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
-	"github.com/phayes/freeport"
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 	"github.com/takescoop/kubectl-port-forward-hooks/internal/command"
 	"github.com/takescoop/kubectl-port-forward-hooks/internal/kubernetes"
 
@@ -17,10 +15,8 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-var annotation string = "local.service.kubernetes.io"
-
-// NewForwardCommand returns the command for forwarding to Kubernetes resources
-func NewForwardCommand() *cobra.Command {
+// newForwardCommand returns the command for forwarding to Kubernetes resources
+func newForwardCommand() *cobra.Command {
 	overrides := &clientcmd.ConfigOverrides{}
 
 	cmd := &cobra.Command{
@@ -43,40 +39,27 @@ func NewForwardCommand() *cobra.Command {
 				return err
 			}
 
-			preCommands, err := parseCommands(service.Annotations, fmt.Sprintf("%s/pre", annotation))
-			if err != nil {
-				return err
-			}
-
-			postCommands, err := parseCommands(service.Annotations, fmt.Sprintf("%s/post", annotation))
-			if err != nil {
-				return err
-			}
-
 			config := &command.Config{}
 
-			defaults, err := parseDefaults(service.Annotations)
+			localPort, err := flags.GetInt("local-port")
 			if err != nil {
 				return err
 			}
 
-			for k, v := range defaults {
-				(*config)[k] = v
+			if localPort > 0 {
+				config.LocalPort = localPort
 			}
 
-			localPort, err := getLocalPort(flags, config)
+			// TODO: Parse CLI arguments
+			// cmdArgs := &command.Args{}
+
+			cmdArgsRaw, err := flags.GetStringArray("args")
 			if err != nil {
 				return err
 			}
 
-			user, _ := flags.GetString("username")
-			if user != "" {
-				(*config)["username"] = user
-			}
-
-			outputs := &command.Outputs{}
-
-			if err := preCommands.Execute(config, outputs); err != nil {
+			cmdArgs, err := ParseArgsFlag(cmdArgsRaw)
+			if err != nil {
 				return err
 			}
 
@@ -85,84 +68,36 @@ func NewForwardCommand() *cobra.Command {
 
 			errChan := make(chan error, 16)
 
-			handlers := &kubernetes.Handlers{
-				OnReady: func() {
-					if err := postCommands.Execute(config, outputs); err != nil {
-						errChan <- err
-					}
-				},
-				OnStop: func() { <-sigChan },
-			}
-
-			if err = client.Forward(service, localPort, handlers); err != nil {
-				return err
-			}
-
-			return nil
+			return command.Execute(client, service, config, cmdArgs, service.Annotations, sigChan, errChan)
 		},
 	}
 
 	clientcmd.BindOverrideFlags(overrides, cmd.PersistentFlags(), clientcmd.RecommendedConfigOverrideFlags(""))
-	cmd.Flags().String("username", "", "Username")
 	cmd.Flags().Int("local-port", 0, "Local port")
+	cmd.Flags().StringArray("args", []string{}, "key=value arguments to be passed to commands")
 
 	return cmd
 }
 
 // Execute executes the forward command
 func Execute() {
-	cmd := NewForwardCommand()
+	cmd := newForwardCommand()
 
 	cobra.CheckErr(cmd.Execute())
 }
 
-// parseCommands receives raw annotations in the form of a map and returns a list of parsed commands
-func parseCommands(annotations map[string]string, target string) (commands command.Commands, err error) {
-	annoCommands, ok := annotations[target]
-	if !ok {
-		return commands, nil
+func ParseArgsFlag(kvs []string) (map[string]string, error) {
+	args := map[string]string{}
+
+	for _, s := range kvs {
+		parsed := strings.Split(s, "=")
+
+		if len(parsed) != 2 {
+			return nil, fmt.Errorf("argument %q must be in key=value format", s)
+		}
+
+		args[parsed[0]] = parsed[1]
 	}
 
-	if err := json.Unmarshal([]byte(annoCommands), &commands); err != nil {
-		return nil, err
-	}
-
-	return commands, nil
-}
-
-// parseDefaults receives raw annotations, looks up the defaults key and returns them as a map
-func parseDefaults(annotations map[string]string) (defaults map[string]interface{}, err error) {
-	annoDefaults, ok := annotations[fmt.Sprintf("%s/defaults", annotation)]
-	if !ok {
-		return defaults, err
-	}
-
-	if err := json.Unmarshal([]byte(annoDefaults), &defaults); err != nil {
-		return nil, err
-	}
-
-	return defaults, err
-}
-
-// getLocalPort returns a port number, checking environment variables, then the defaults object, and finally a random open port
-func getLocalPort(flags *pflag.FlagSet, config *command.Config) (int, error) {
-	localPort, err := flags.GetInt("local-port")
-	if err != nil {
-		return 0, err
-	}
-
-	if localPort > 0 {
-		return localPort, nil
-	}
-
-	localPort, err = config.GetInt("localport")
-	if err != nil {
-		return 0, err
-	}
-
-	if localPort > 0 {
-		return localPort, nil
-	}
-
-	return freeport.GetFreePort()
+	return args, nil
 }

@@ -10,7 +10,7 @@ type Command struct {
 }
 
 // Execute runs the command with the given config and outputs
-func (c Command) Execute(opts *Config, outputs *Outputs) (stdout *bytes.Buffer, stderr *bytes.Buffer, err error) {
+func (c Command) Execute(opts *Config, arguments *Args, outputs *Outputs) (stdout *bytes.Buffer, stderr *bytes.Buffer, err error) {
 	// TODO: run the command, return the output
 	return &bytes.Buffer{}, &bytes.Buffer{}, nil
 }
