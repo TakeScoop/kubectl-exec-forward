@@ -27,8 +27,8 @@ func (c Commands) Execute(config *Config, arguments *Args, outputs *Outputs) err
 	return nil
 }
 
-func ParseCommands(annotations map[string]string, target string) (commands Commands, err error) {
-	v, ok := annotations[target]
+func ParseCommands(annotations map[string]string, key string) (commands Commands, err error) {
+	v, ok := annotations[key]
 	if !ok {
 		return commands, nil
 	}
