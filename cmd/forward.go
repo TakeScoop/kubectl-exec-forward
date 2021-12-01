@@ -50,9 +50,6 @@ func newForwardCommand() *cobra.Command {
 				config.LocalPort = localPort
 			}
 
-			// TODO: Parse CLI arguments
-			// cmdArgs := &command.Args{}
-
 			cmdArgsRaw, err := flags.GetStringArray("args")
 			if err != nil {
 				return err
