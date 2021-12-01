@@ -16,7 +16,7 @@ type Handlers struct {
 
 type Client struct {
 	config    clientcmd.ClientConfig
-	client    *kubernetes.Clientset
+	clientset *kubernetes.Clientset
 	namespace string
 }
 
@@ -48,7 +48,7 @@ func (c *Client) Init() error {
 		return err
 	}
 
-	c.client = client
+	c.clientset = client
 
 	namespace, _, err := c.config.Namespace()
 	if err != nil {
@@ -62,5 +62,5 @@ func (c *Client) Init() error {
 
 // GetService returns the service object denoted by the passed service name
 func (c Client) GetService(ctx context.Context, name string, options *v1meta.GetOptions) (*v1.Service, error) {
-	return c.client.CoreV1().Services(c.namespace).Get(ctx, name, *options)
+	return c.clientset.CoreV1().Services(c.namespace).Get(ctx, name, *options)
 }

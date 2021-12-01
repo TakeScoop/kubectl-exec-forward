@@ -83,14 +83,12 @@ func NewForwardCommand() *cobra.Command {
 			sigChan := make(chan os.Signal, 1)
 			signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
-			errChan := make(chan error)
+			errChan := make(chan error, 16)
 
 			handlers := &kubernetes.Handlers{
 				OnReady: func() {
 					if err := postCommands.Execute(config, outputs); err != nil {
-						if err != nil {
-							errChan <- err
-						}
+						errChan <- err
 					}
 				},
 				OnStop: func() { <-sigChan },
