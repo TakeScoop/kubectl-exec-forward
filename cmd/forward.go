@@ -11,7 +11,7 @@ import (
 	"github.com/takescoop/kubectl-port-forward-hooks/internal/command"
 	"github.com/takescoop/kubectl-port-forward-hooks/internal/kubernetes"
 
-	v1meta "k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
@@ -34,7 +34,7 @@ func newForwardCommand() *cobra.Command {
 			}
 
 			// TODO: handle Kubernetes resources other than service
-			service, err := client.GetService(ctx, args[0], &v1meta.GetOptions{})
+			service, err := client.GetService(ctx, args[0], &v1.GetOptions{})
 			if err != nil {
 				return err
 			}
@@ -63,15 +63,25 @@ func newForwardCommand() *cobra.Command {
 			sigChan := make(chan os.Signal, 1)
 			signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
-			errChan := make(chan error, 16)
+			chans := command.Handlers{
+				Err: make(chan error, 16),
+				Sig: sigChan,
+			}
 
-			return command.Execute(client, service, config, cmdArgs, service.Annotations, sigChan, errChan)
+			ios := command.IO{
+				Stdin:  os.Stdin,
+				Stdout: os.Stdout,
+				Stderr: os.Stderr,
+			}
+
+			return command.Execute(ctx, client, service, config, cmdArgs, service.Annotations, chans, ios)
 		},
 	}
 
 	clientcmd.BindOverrideFlags(overrides, cmd.PersistentFlags(), clientcmd.RecommendedConfigOverrideFlags(""))
 	cmd.Flags().Int("local-port", 0, "Local port")
 	cmd.Flags().StringArray("args", []string{}, "key=value arguments to be passed to commands")
+	cmd.Flags().Bool("verbose", false, "Whether to write command outputs to console")
 
 	return cmd
 }

@@ -1,27 +1,23 @@
 package command
 
 import (
+	"context"
 	"encoding/json"
-	"log"
 )
 
 type Commands []*Command
 
 // Execute runs each command in the calling slice sequentially using the passed config and the outputs accumulated to that point
-func (c Commands) Execute(config *Config, arguments *Args, outputs *Outputs) error {
+func (c Commands) Execute(ctx context.Context, config *Config, arguments *Args, outputs map[string]Output, ios IO) error {
 	for _, command := range c {
-		stdout, stderr, err := command.Execute(config, arguments, outputs)
+		output, err := command.Execute(ctx, config, arguments, outputs, ios)
 		if err != nil {
 			return err
 		}
 
-		// TODO: use a log level for this instead of a warning log
-		if stderr.Len() > 0 {
-			log.Printf("Warning: command %q wrote to untracked stderr:\n", command.Command)
-			log.Println(stderr.String())
+		if command.ID != "" {
+			outputs[command.ID] = output
 		}
-
-		(*outputs)[command.ID] = stdout.String()
 	}
 
 	return nil

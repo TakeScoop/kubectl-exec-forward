@@ -1,6 +1,7 @@
 package command
 
 import (
+	"context"
 	"os"
 
 	"github.com/takescoop/kubectl-port-forward-hooks/internal/kubernetes"
@@ -14,7 +15,12 @@ const (
 	postAnnotation   string = "local.service.kubernetes.io/post"
 )
 
-func Execute(client *kubernetes.Client, service *v1.Service, cliConfig *Config, cliArgs map[string]string, annotations map[string]string, sigChan chan os.Signal, errChan chan error) error {
+type Handlers struct {
+	Err chan error
+	Sig chan os.Signal
+}
+
+func Execute(ctx context.Context, client *kubernetes.Client, service *v1.Service, cliConfig *Config, cliArgs map[string]string, annotations map[string]string, chans Handlers, ios IO) error {
 	args, err := ParseArgs(service.Annotations, cliArgs)
 	if err != nil {
 		return err
@@ -35,19 +41,19 @@ func Execute(client *kubernetes.Client, service *v1.Service, cliConfig *Config, 
 		return err
 	}
 
-	outputs := &Outputs{}
+	outputs := map[string]Output{}
 
-	if err := pre.Execute(config, args, outputs); err != nil {
+	if err := pre.Execute(ctx, config, args, outputs, ios); err != nil {
 		return err
 	}
 
 	handlers := &kubernetes.Handlers{
 		OnReady: func() {
-			if err := post.Execute(config, args, outputs); err != nil {
-				errChan <- err
+			if err := post.Execute(ctx, config, args, outputs, ios); err != nil {
+				chans.Err <- err
 			}
 		},
-		OnStop: func() { <-sigChan },
+		OnStop: func() { <-chans.Sig },
 	}
 
 	return client.Forward(service, config.LocalPort, handlers)

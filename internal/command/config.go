@@ -3,7 +3,8 @@ package command
 import "encoding/json"
 
 type Config struct {
-	LocalPort int `json:"local_port"`
+	LocalPort int  `json:"local_port"`
+	Verbose   bool `json:"verbose"`
 }
 
 func ParseConfig(annotations map[string]string, overrides *Config) (config *Config, err error) {
@@ -26,5 +27,9 @@ func ParseConfig(annotations map[string]string, overrides *Config) (config *Conf
 func (c *Config) addOverrides(override *Config) {
 	if override.LocalPort > 0 {
 		c.LocalPort = override.LocalPort
+	}
+
+	if override.Verbose {
+		c.Verbose = override.Verbose
 	}
 }

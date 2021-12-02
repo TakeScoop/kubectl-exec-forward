@@ -1,3 +1,6 @@
 package command
 
-type Outputs map[string]string
+type Output struct {
+	Stdout string
+	Stderr string
+}
