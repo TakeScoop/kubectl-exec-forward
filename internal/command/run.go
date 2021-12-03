@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/takescoop/kubectl-port-forward-hooks/internal/kubernetes"
+	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
 const (
@@ -13,7 +14,7 @@ const (
 )
 
 // Run executes commands found on the passed resource annotations and opens a forwarding connection to the resource
-func Run(ctx context.Context, client *kubernetes.Client, resource string, config *Config, cliArgs map[string]string) error {
+func Run(ctx context.Context, client *kubernetes.Client, resource string, config *Config, cliArgs map[string]string, streams genericclioptions.IOStreams) error {
 	annotations, err := client.GetAnnotations(ctx, resource)
 	if err != nil {
 		return err
@@ -35,7 +36,7 @@ func Run(ctx context.Context, client *kubernetes.Client, resource string, config
 	}
 
 	outputs := map[string]Output{}
-	if err := pre.execute(ctx, config, args, outputs, *client.Streams); err != nil {
+	if err := pre.execute(ctx, config, args, outputs, streams); err != nil {
 		return err
 	}
 
@@ -45,7 +46,7 @@ func Run(ctx context.Context, client *kubernetes.Client, resource string, config
 	go func() {
 		<-client.Opts.ReadyChannel
 
-		if err := post.execute(ctx, config, args, outputs, *client.Streams); err != nil {
+		if err := post.execute(ctx, config, args, outputs, streams); err != nil {
 			errChan <- err
 		}
 

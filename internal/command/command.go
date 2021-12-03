@@ -16,7 +16,7 @@ type Command struct {
 }
 
 // Execute runs the command with the given config and outputs
-func (c Command) execute(ctx context.Context, config *Config, arguments *Args, outputs map[string]Output, ios genericclioptions.IOStreams) (Output, error) {
+func (c Command) execute(ctx context.Context, config *Config, arguments *Args, outputs map[string]Output, streams *genericclioptions.IOStreams) (Output, error) {
 	// TODO: Add in go templating to pair the args and config with the passed commands
 	name, args := c.Command[0], c.Command[1:]
 	cmd := exec.CommandContext(ctx, name, args...)
@@ -28,13 +28,13 @@ func (c Command) execute(ctx context.Context, config *Config, arguments *Args, o
 	ews := []io.Writer{berr}
 
 	if c.Interactive || config.Verbose {
-		ows = append(ows, ios.Out)
-		ews = append(ews, ios.ErrOut)
+		ows = append(ows, streams.Out)
+		ews = append(ews, streams.ErrOut)
 	}
 
 	cmd.Stdout = io.MultiWriter(ows...)
 	cmd.Stderr = io.MultiWriter(ews...)
-	cmd.Stdin = ios.In
+	cmd.Stdin = streams.In
 
 	err := cmd.Run()
 

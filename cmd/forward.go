@@ -61,7 +61,7 @@ func newForwardCommand() *cobra.Command {
 				return err
 			}
 
-			if err := command.Run(ctx, client, args[0], config, cmdArgs); err != nil {
+			if err := command.Run(ctx, client, args[0], config, cmdArgs, streams); err != nil {
 				return err
 			}
 

@@ -10,9 +10,9 @@ import (
 type Commands []*Command
 
 // execute runs each command in the calling slice sequentially using the passed config and the outputs accumulated to that point
-func (c Commands) execute(ctx context.Context, config *Config, arguments *Args, outputs map[string]Output, ios genericclioptions.IOStreams) error {
+func (c Commands) execute(ctx context.Context, config *Config, arguments *Args, outputs map[string]Output, streams *genericclioptions.IOStreams) error {
 	for _, command := range c {
-		output, err := command.execute(ctx, config, arguments, outputs, ios)
+		output, err := command.execute(ctx, config, arguments, outputs, streams)
 		if err != nil {
 			return err
 		}
