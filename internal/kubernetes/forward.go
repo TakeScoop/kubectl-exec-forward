@@ -19,6 +19,7 @@ import (
 
 type PortForwarder genericclioptions.IOStreams
 
+// ForwardPorts is an interface requirement for PortForwarder which handles the port forwarding connection
 func (f PortForwarder) ForwardPorts(method string, url *url.URL, opts portforward.PortForwardOptions) error {
 	transport, upgrader, err := spdy.RoundTripperFor(opts.Config)
 	if err != nil {
@@ -33,7 +34,6 @@ func (f PortForwarder) ForwardPorts(method string, url *url.URL, opts portforwar
 }
 
 // runPortForward implements all the necessary functionality for port-forward cmd.
-// Borrowed from https://github.com/kubernetes/kubectl/blob/master/pkg/cmd/portforward/portforward.go#L388
 func runPortForward(ctx context.Context, o portforward.PortForwardOptions) error {
 	pod, err := o.PodClient.Pods(o.Namespace).Get(ctx, o.PodName, metav1.GetOptions{})
 	if err != nil {
@@ -64,6 +64,7 @@ func runPortForward(ctx context.Context, o portforward.PortForwardOptions) error
 	return o.PortForwarder.ForwardPorts("POST", req.URL(), o)
 }
 
+// Forward is the preferred client entrypoint for port forwarding
 func (c Client) Forward(ctx context.Context) error {
 	return runPortForward(ctx, *c.Opts)
 }
