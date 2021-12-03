@@ -6,9 +6,9 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestParseArgsFlag(t *testing.T) {
+func TestParseArgs(t *testing.T) {
 	t.Run("Parse basic args flag", func(t *testing.T) {
-		args, err := parseArgsFlag([]string{"foo=bar", "baz=woz"})
+		args, err := parseArgs([]string{"foo=bar", "baz=woz"})
 		assert.NoError(t, err)
 
 		assert.Equal(t, map[string]string{
@@ -18,14 +18,14 @@ func TestParseArgsFlag(t *testing.T) {
 	})
 
 	t.Run("Parse empty args flag", func(t *testing.T) {
-		args, err := parseArgsFlag([]string{})
+		args, err := parseArgs([]string{})
 		assert.NoError(t, err)
 
 		assert.Equal(t, map[string]string{}, args)
 	})
 
 	t.Run("Error on malformed kv input", func(t *testing.T) {
-		_, err := parseArgsFlag([]string{"foo bar"})
+		_, err := parseArgs([]string{"foo bar"})
 		assert.Error(t, err)
 	})
 }

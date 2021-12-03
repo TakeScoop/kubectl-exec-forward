@@ -56,7 +56,7 @@ func newForwardCommand() *cobra.Command {
 				return err
 			}
 
-			cmdArgs, err := parseArgs(cmd)
+			cmdArgs, err := parseArgsFlag(cmd)
 			if err != nil {
 				return err
 			}
@@ -89,7 +89,8 @@ func Execute() {
 	cobra.CheckErr(cmd.Execute())
 }
 
-func parseArgs(cmd *cobra.Command) (map[string]string, error) {
+// parseArgsFlag parses the passed command line --args into a key value map
+func parseArgsFlag(cmd *cobra.Command) (map[string]string, error) {
 	flags := cmd.Flags()
 
 	cmdArgsRaw, err := flags.GetStringArray("args")
@@ -97,14 +98,15 @@ func parseArgs(cmd *cobra.Command) (map[string]string, error) {
 		return nil, err
 	}
 
-	cmdArgs, err := parseArgsFlag(cmdArgsRaw)
+	cmdArgs, err := parseArgs(cmdArgsRaw)
 	if err != nil {
 		return nil, err
 	}
 	return cmdArgs, nil
 }
 
-func parseArgsFlag(kvs []string) (map[string]string, error) {
+// parseArgs is a helper to parse the passed --args value
+func parseArgs(kvs []string) (map[string]string, error) {
 	args := map[string]string{}
 
 	for _, s := range kvs {
