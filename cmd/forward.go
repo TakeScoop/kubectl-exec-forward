@@ -69,14 +69,15 @@ func newForwardCommand() *cobra.Command {
 		},
 	}
 
-	// clientcmd.BindOverrideFlags(overrides, cmd.PersistentFlags(), clientcmd.RecommendedConfigOverrideFlags(""))
-	cmdutil.AddPodRunningTimeoutFlag(cmd, 500)
 	flags.AddFlagSet(cmd.PersistentFlags())
 	kubeConfigFlags.AddFlags(flags)
 	kubeResouceBuilderFlags.AddFlags(flags)
+
+	cmdutil.AddPodRunningTimeoutFlag(cmd, 500)
 	cmd.Flags().StringArray("args", []string{}, "key=value arguments to be passed to commands")
 	cmd.Flags().Bool("verbose", false, "Whether to write command outputs to console")
 	cmd.Flags().StringSliceVar(&client.Opts.Address, "address", []string{"localhost"}, "Addresses to listen on (comma separated). Only accepts IP addresses or localhost as a value. When localhost is supplied, kubectl will try to bind on both 127.0.0.1 and ::1 and will fail if neither of these addresses are available to bind.")
+
 	return cmd
 }
 

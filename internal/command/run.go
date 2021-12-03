@@ -35,16 +35,36 @@ func Run(ctx context.Context, client *kubernetes.Client, resource string, config
 	}
 
 	outputs := map[string]Output{}
-	pre.execute(ctx, config, args, outputs, *client.Streams)
-
-	go func() {
-		<-client.Opts.ReadyChannel
-		post.execute(ctx, config, args, outputs, *client.Streams)
-	}()
-
-	if err := client.Forward(ctx); err != nil {
+	if err := pre.execute(ctx, config, args, outputs, *client.Streams); err != nil {
 		return err
 	}
 
-	return nil
+	errChan := make(chan error, 16)
+	doneChan := make(chan bool, 8)
+
+	go func() {
+		<-client.Opts.ReadyChannel
+
+		if err := post.execute(ctx, config, args, outputs, *client.Streams); err != nil {
+			errChan <- err
+		}
+
+		doneChan <- true
+	}()
+
+	go func() {
+		if err := client.Forward(ctx); err != nil {
+			errChan <- err
+		}
+	}()
+
+	for {
+		select {
+		case err := <-errChan:
+			return err
+		case <-doneChan:
+			client.Opts.StopChannel <- struct{}{}
+			return nil
+		}
+	}
 }
