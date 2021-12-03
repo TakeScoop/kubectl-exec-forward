@@ -13,8 +13,8 @@ const (
 	postAnnotation string = "local.service.kubernetes.io/post"
 )
 
-// Run executes commands found on the passed resource annotations and opens a forwarding connection to the resource
-func Run(ctx context.Context, client *kubernetes.Client, resource string, config *Config, cliArgs map[string]string, streams genericclioptions.IOStreams) error {
+// Run executes commands found on the passed resource's annotations and opens a forwarding connection to the resource
+func Run(ctx context.Context, client *kubernetes.Client, resource string, config *Config, cliArgs map[string]string, streams *genericclioptions.IOStreams) error {
 	annotations, err := client.GetAnnotations(ctx, resource)
 	if err != nil {
 		return err
