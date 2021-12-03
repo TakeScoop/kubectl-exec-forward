@@ -6,7 +6,8 @@ import (
 
 type Args map[string]interface{}
 
-func ParseArgs(annotations map[string]string, overrides map[string]string) (args *Args, err error) {
+// parseArgs parses key value pairs from the passed annotations map, adds any overrides passed and returns a new args map
+func parseArgs(annotations map[string]string, overrides map[string]string) (args *Args, err error) {
 	v, ok := annotations[argsAnnotation]
 	if !ok {
 		return args, err
@@ -21,6 +22,7 @@ func ParseArgs(annotations map[string]string, overrides map[string]string) (args
 	return args, err
 }
 
+// addOverrides adds the pased key value pairs to the calling args map
 func (a *Args) addOverrides(overrides map[string]string) {
 	for k, v := range overrides {
 		(*a)[k] = v

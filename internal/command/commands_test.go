@@ -8,7 +8,7 @@ import (
 
 func TestParseCommands(t *testing.T) {
 	t.Run("Parse basic command", func(t *testing.T) {
-		commands, err := ParseCommands(map[string]string{
+		commands, err := parseCommands(map[string]string{
 			preAnnotation:  `[{"command":["echo","pre"]}]`,
 			postAnnotation: `[{"command":["echo","post1"]},{"command":["echo", "post2"],"id":"token"}]`,
 		}, preAnnotation)
@@ -21,7 +21,7 @@ func TestParseCommands(t *testing.T) {
 	})
 
 	t.Run("Parse basic with multiple commands", func(t *testing.T) {
-		commands, err := ParseCommands(map[string]string{
+		commands, err := parseCommands(map[string]string{
 			preAnnotation:  `[{"command":["echo","pre"]}]`,
 			postAnnotation: `[{"command":["echo","post1"]},{"command":["echo", "post2"],"id":"foo"}]`,
 		}, postAnnotation)

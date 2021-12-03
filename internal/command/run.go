@@ -12,33 +12,34 @@ const (
 	postAnnotation string = "local.service.kubernetes.io/post"
 )
 
-func Execute(ctx context.Context, client *kubernetes.Client, resource string, config *Config, cliArgs map[string]string) error {
+// Run executes commands found on the passed resource annotations and opens a forwarding connection to the resource
+func Run(ctx context.Context, client *kubernetes.Client, resource string, config *Config, cliArgs map[string]string) error {
 	annotations, err := client.GetAnnotations(ctx, resource)
 	if err != nil {
 		return err
 	}
 
-	args, err := ParseArgs(annotations, cliArgs)
+	args, err := parseArgs(annotations, cliArgs)
 	if err != nil {
 		return err
 	}
 
-	pre, err := ParseCommands(annotations, preAnnotation)
+	pre, err := parseCommands(annotations, preAnnotation)
 	if err != nil {
 		return err
 	}
 
-	post, err := ParseCommands(annotations, postAnnotation)
+	post, err := parseCommands(annotations, postAnnotation)
 	if err != nil {
 		return err
 	}
 
 	outputs := map[string]Output{}
-	pre.Execute(ctx, config, args, outputs, *client.Streams)
+	pre.execute(ctx, config, args, outputs, *client.Streams)
 
 	go func() {
 		<-client.Opts.ReadyChannel
-		post.Execute(ctx, config, args, outputs, *client.Streams)
+		post.execute(ctx, config, args, outputs, *client.Streams)
 	}()
 
 	if err := client.Forward(ctx); err != nil {

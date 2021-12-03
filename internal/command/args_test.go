@@ -13,7 +13,7 @@ func TestParseArgs(t *testing.T) {
 			argsAnnotation: `{"username":"foo","schema":"https"}`,
 		}
 
-		args, err := ParseArgs(annotations, map[string]string{})
+		args, err := parseArgs(annotations, map[string]string{})
 		assert.NoError(t, err)
 
 		expected := Args{
@@ -30,7 +30,7 @@ func TestParseArgs(t *testing.T) {
 			argsAnnotation: `{"username":"foo","schema":"https"}`,
 		}
 
-		args, err := ParseArgs(annotations, map[string]string{
+		args, err := parseArgs(annotations, map[string]string{
 			"username": "bar",
 		})
 		assert.NoError(t, err)

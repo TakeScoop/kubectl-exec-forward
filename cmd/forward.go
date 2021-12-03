@@ -52,11 +52,7 @@ func newForwardCommand() *cobra.Command {
 			}
 			config.Verbose = v
 
-			if err := client.Init(
-				cmdutil.NewMatchVersionFlags(kubeConfigFlags),
-				cmd,
-				[]string{args[0], ports.Map},
-			); err != nil {
+			if err := client.Init(cmdutil.NewMatchVersionFlags(kubeConfigFlags), cmd, []string{args[0], ports.Map}); err != nil {
 				return err
 			}
 
@@ -65,7 +61,7 @@ func newForwardCommand() *cobra.Command {
 				return err
 			}
 
-			if err := command.Execute(ctx, client, args[0], config, cmdArgs); err != nil {
+			if err := command.Run(ctx, client, args[0], config, cmdArgs); err != nil {
 				return err
 			}
 

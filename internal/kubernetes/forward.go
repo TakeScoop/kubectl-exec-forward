@@ -32,8 +32,9 @@ func (f PortForwarder) ForwardPorts(method string, url *url.URL, opts portforwar
 	return fw.ForwardPorts()
 }
 
-// RunPortForward implements all the necessary functionality for port-forward cmd.
-func RunPortForward(ctx context.Context, o portforward.PortForwardOptions) error {
+// runPortForward implements all the necessary functionality for port-forward cmd.
+// Borrowed from https://github.com/kubernetes/kubectl/blob/master/pkg/cmd/portforward/portforward.go#L388
+func runPortForward(ctx context.Context, o portforward.PortForwardOptions) error {
 	pod, err := o.PodClient.Pods(o.Namespace).Get(ctx, o.PodName, metav1.GetOptions{})
 	if err != nil {
 		return err
@@ -64,5 +65,5 @@ func RunPortForward(ctx context.Context, o portforward.PortForwardOptions) error
 }
 
 func (c Client) Forward(ctx context.Context) error {
-	return RunPortForward(ctx, *c.Opts)
+	return runPortForward(ctx, *c.Opts)
 }

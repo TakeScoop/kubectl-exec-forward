@@ -16,7 +16,7 @@ type Command struct {
 }
 
 // Execute runs the command with the given config and outputs
-func (c Command) Execute(ctx context.Context, config *Config, arguments *Args, outputs map[string]Output, ios genericclioptions.IOStreams) (Output, error) {
+func (c Command) execute(ctx context.Context, config *Config, arguments *Args, outputs map[string]Output, ios genericclioptions.IOStreams) (Output, error) {
 	name, args := c.Command[0], c.Command[1:]
 	cmd := exec.CommandContext(ctx, name, args...)
 
