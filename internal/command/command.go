@@ -5,6 +5,8 @@ import (
 	"context"
 	"io"
 	"os/exec"
+
+	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
 type Command struct {
@@ -14,7 +16,7 @@ type Command struct {
 }
 
 // Execute runs the command with the given config and outputs
-func (c Command) Execute(ctx context.Context, config *Config, arguments *Args, outputs map[string]Output, ios IO) (Output, error) {
+func (c Command) Execute(ctx context.Context, config *Config, arguments *Args, outputs map[string]Output, ios genericclioptions.IOStreams) (Output, error) {
 	name, args := c.Command[0], c.Command[1:]
 	cmd := exec.CommandContext(ctx, name, args...)
 
@@ -25,13 +27,13 @@ func (c Command) Execute(ctx context.Context, config *Config, arguments *Args, o
 	ews := []io.Writer{berr}
 
 	if c.Interactive || config.Verbose {
-		ows = append(ows, ios.Stdout)
-		ews = append(ews, ios.Stderr)
+		ows = append(ows, ios.Out)
+		ews = append(ews, ios.ErrOut)
 	}
 
 	cmd.Stdout = io.MultiWriter(ows...)
 	cmd.Stderr = io.MultiWriter(ews...)
-	cmd.Stdin = ios.Stdin
+	cmd.Stdin = ios.In
 
 	err := cmd.Run()
 

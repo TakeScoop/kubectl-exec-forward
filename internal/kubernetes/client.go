@@ -1,60 +1,39 @@
 package kubernetes
 
 import (
-	"context"
-
-	v1 "k8s.io/api/core/v1"
-	v1meta "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
+	"github.com/spf13/cobra"
+	"k8s.io/cli-runtime/pkg/genericclioptions"
+	"k8s.io/kubectl/pkg/cmd/portforward"
+	cmdutil "k8s.io/kubectl/pkg/cmd/util"
 )
 
-type Handlers struct {
-	OnReady func()
-	OnStop  func()
-}
-
 type Client struct {
-	config    clientcmd.ClientConfig
-	clientset *kubernetes.Clientset
-	namespace string
+	Opts    *portforward.PortForwardOptions
+	Streams *genericclioptions.IOStreams
 }
 
-// New returns an uninitialized Kubernetes client
-func New(overrides *clientcmd.ConfigOverrides) *Client {
+func New(streams *genericclioptions.IOStreams) *Client {
 	return &Client{
-		config: clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
-			clientcmd.NewDefaultClientConfigLoadingRules(),
-			overrides,
-		),
+		Opts: &portforward.PortForwardOptions{
+			PortForwarder: &PortForwarder{
+				Out:    streams.Out,
+				ErrOut: streams.ErrOut,
+			},
+		},
+		Streams: streams,
 	}
 }
 
-// Init initializes the calling Kubernetes client
-func (c *Client) Init() error {
-	restConfig, err := c.config.ClientConfig()
-	if err != nil {
+func (c *Client) Init(getter genericclioptions.RESTClientGetter, cmd *cobra.Command, args []string) error {
+	f := cmdutil.NewFactory(getter)
+
+	if err := c.Opts.Complete(f, cmd, args); err != nil {
 		return err
 	}
 
-	client, err := kubernetes.NewForConfig(restConfig)
-	if err != nil {
+	if err := c.Opts.Validate(); err != nil {
 		return err
 	}
-
-	c.clientset = client
-
-	namespace, _, err := c.config.Namespace()
-	if err != nil {
-		return err
-	}
-
-	c.namespace = namespace
 
 	return nil
-}
-
-// GetService returns the service object denoted by the passed service name
-func (c Client) GetService(ctx context.Context, name string, options *v1meta.GetOptions) (*v1.Service, error) {
-	return c.clientset.CoreV1().Services(c.namespace).Get(ctx, name, *options)
 }

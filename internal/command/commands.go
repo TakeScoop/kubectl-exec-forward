@@ -3,12 +3,14 @@ package command
 import (
 	"context"
 	"encoding/json"
+
+	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
 type Commands []*Command
 
 // Execute runs each command in the calling slice sequentially using the passed config and the outputs accumulated to that point
-func (c Commands) Execute(ctx context.Context, config *Config, arguments *Args, outputs map[string]Output, ios IO) error {
+func (c Commands) Execute(ctx context.Context, config *Config, arguments *Args, outputs map[string]Output, ios genericclioptions.IOStreams) error {
 	for _, command := range c {
 		output, err := command.Execute(ctx, config, arguments, outputs, ios)
 		if err != nil {
