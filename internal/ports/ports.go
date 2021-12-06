@@ -15,7 +15,7 @@ type Ports struct {
 }
 
 // ParsePorts takes a port mapping (8080:80) and returns a parsed port object, expanding the port 0 to the first open port found.
-func ParsePorts(portMap string) (*Ports, error) {
+func Parse(portMap string) (*Ports, error) {
 	lstr, remote := splitPort(portMap)
 
 	local, err := strconv.Atoi(lstr)

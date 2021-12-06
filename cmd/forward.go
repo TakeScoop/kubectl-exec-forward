@@ -40,7 +40,7 @@ func newForwardCommand() *cobra.Command {
 
 			config := &command.Config{}
 
-			ports, err := ports.ParsePorts(args[1])
+			ports, err := ports.Parse(args[1])
 			if err != nil {
 				return err
 			}
@@ -114,7 +114,7 @@ func parseArgs(kvs []string) (map[string]string, error) {
 		parsed := strings.Split(s, "=")
 
 		if len(parsed) != 2 {
-			return nil, fmt.Errorf("arg value must be in key=value format", s)
+			return nil, fmt.Errorf("arg value must be in key=value format")
 		}
 
 		args[parsed[0]] = parsed[1]
