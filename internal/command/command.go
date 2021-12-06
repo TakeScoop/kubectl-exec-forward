@@ -15,11 +15,22 @@ type Command struct {
 	Interactive bool     `json:"interactive"`
 }
 
-// Execute runs the command with the given config and outputs
+// cmd returns a golang cmd object from the calling command
+func (c Command) toCmd(ctx context.Context) *exec.Cmd {
+	name := c.Command[0]
+	args := []string{}
+
+	if len(c.Command) > 1 {
+		args = append(args, c.Command[1:]...)
+	}
+
+	return exec.CommandContext(ctx, name, args...)
+}
+
+// execute runs the command with the given config and outputs.
 func (c Command) execute(ctx context.Context, config *Config, arguments *Args, outputs map[string]Output, streams *genericclioptions.IOStreams) (Output, error) {
 	// TODO: Add in go templating to pair the args and config with the passed commands
-	name, args := c.Command[0], c.Command[1:]
-	cmd := exec.CommandContext(ctx, name, args...)
+	cmd := c.toCmd(ctx)
 
 	bout := new(bytes.Buffer)
 	berr := new(bytes.Buffer)

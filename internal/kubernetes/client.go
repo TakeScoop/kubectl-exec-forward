@@ -11,7 +11,7 @@ type Client struct {
 	Opts *portforward.PortForwardOptions
 }
 
-// New returns a client to interact with Kubernetes
+// New returns a client to interact with Kubernetes.
 func New(streams *genericclioptions.IOStreams) *Client {
 	return &Client{
 		Opts: &portforward.PortForwardOptions{
@@ -23,7 +23,7 @@ func New(streams *genericclioptions.IOStreams) *Client {
 	}
 }
 
-// Init initalizes the client with the appropriate information gathered from the cluster and passed args
+// Init initializes the client with the appropriate information gathered from the cluster and passed args.
 func (c *Client) Init(getter genericclioptions.RESTClientGetter, cmd *cobra.Command, args []string) error {
 	f := cmdutil.NewFactory(getter)
 

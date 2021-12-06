@@ -9,7 +9,7 @@ import (
 
 type Commands []*Command
 
-// execute runs each command in the calling slice sequentially using the passed config and the outputs accumulated to that point
+// execute runs each command in the calling slice sequentially using the passed config and the outputs accumulated to that point.
 func (c Commands) execute(ctx context.Context, config *Config, arguments *Args, outputs map[string]Output, streams *genericclioptions.IOStreams) error {
 	for _, command := range c {
 		output, err := command.execute(ctx, config, arguments, outputs, streams)
@@ -25,7 +25,7 @@ func (c Commands) execute(ctx context.Context, config *Config, arguments *Args, 
 	return nil
 }
 
-// parseCommnads returns a slice of commands parsed from an annotations map at the value "key"
+// parseCommands returns a slice of commands parsed from an annotations map at the value "key".
 func parseCommands(annotations map[string]string, key string) (commands Commands, err error) {
 	v, ok := annotations[key]
 	if !ok {

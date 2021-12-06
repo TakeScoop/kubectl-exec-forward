@@ -13,7 +13,7 @@ const (
 	postAnnotation string = "local.service.kubernetes.io/post"
 )
 
-// Run executes commands found on the passed resource's annotations and opens a forwarding connection to the resource
+// Run executes commands found on the passed resource's annotations and opens a forwarding connection to the resource.
 func Run(ctx context.Context, client *kubernetes.Client, resource string, config *Config, cliArgs map[string]string, streams *genericclioptions.IOStreams) error {
 	annotations, err := client.GetAnnotations(ctx, resource)
 	if err != nil {
@@ -25,28 +25,24 @@ func Run(ctx context.Context, client *kubernetes.Client, resource string, config
 		return err
 	}
 
-	pre, err := parseCommands(annotations, preAnnotation)
-	if err != nil {
-		return err
-	}
-
-	post, err := parseCommands(annotations, postAnnotation)
+	hooks, err := newHooks(annotations)
 	if err != nil {
 		return err
 	}
 
 	outputs := map[string]Output{}
-	if err := pre.execute(ctx, config, args, outputs, streams); err != nil {
+
+	if err := hooks.Pre.execute(ctx, config, args, outputs, streams); err != nil {
 		return err
 	}
 
-	errChan := make(chan error, 16)
-	doneChan := make(chan bool, 8)
+	errChan := make(chan error, 1)
+	doneChan := make(chan bool, 1)
 
 	go func() {
 		<-client.Opts.ReadyChannel
 
-		if err := post.execute(ctx, config, args, outputs, streams); err != nil {
+		if err := hooks.Post.execute(ctx, config, args, outputs, streams); err != nil {
 			errChan <- err
 		}
 
@@ -65,6 +61,7 @@ func Run(ctx context.Context, client *kubernetes.Client, resource string, config
 			return err
 		case <-doneChan:
 			client.Opts.StopChannel <- struct{}{}
+
 			return nil
 		}
 	}

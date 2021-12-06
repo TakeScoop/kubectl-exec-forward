@@ -9,7 +9,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
-// GetAnnotations queries for the passed resource and returns the annotations for the found object
+// GetAnnotations queries for the passed resource and returns the annotations for the found object.
 func (c Client) GetAnnotations(ctx context.Context, resource string) (map[string]string, error) {
 	r := strings.Split(resource, "/")
 
@@ -37,7 +37,7 @@ func (c Client) GetAnnotations(ctx context.Context, resource string) (map[string
 	}
 }
 
-// getServiceAnnotations returns annotations from the passed resource
+// getServiceAnnotations returns annotations from the passed resource.
 func (c Client) getServiceAnnotations(ctx context.Context, name string) (map[string]string, error) {
 	res := c.Opts.RESTClient.Get().
 		Namespace(c.Opts.Namespace).
@@ -58,7 +58,7 @@ func (c Client) getServiceAnnotations(ctx context.Context, name string) (map[str
 	return svc.Annotations, nil
 }
 
-// getPodAnnotations returns annotations from the passed resource
+// getPodAnnotations returns annotations from the passed resource.
 func (c Client) getPodAnnotations(ctx context.Context, name string) (map[string]string, error) {
 	res := c.Opts.RESTClient.Get().
 		Namespace(c.Opts.Namespace).
@@ -79,7 +79,7 @@ func (c Client) getPodAnnotations(ctx context.Context, name string) (map[string]
 	return pod.Annotations, nil
 }
 
-// getDeploymentAnnotations returns annotations from the passed resource
+// getDeploymentAnnotations returns annotations from the passed resource.
 func (c Client) getDeploymentAnnotations(ctx context.Context, name string) (map[string]string, error) {
 	res := c.Opts.RESTClient.Get().
 		Namespace(c.Opts.Namespace).
