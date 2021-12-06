@@ -14,7 +14,7 @@ type Ports struct {
 	Map    string
 }
 
-// ParsePorts takes a port mapping (8080:80) and returns a parsed port object, expanding the port 0 to the first open port found.
+// Parse takes a port mapping (8080:80) and returns a parsed port object, expanding the port 0 to the first open port found.
 func Parse(portMap string) (*Ports, error) {
 	lstr, remote := splitPort(portMap)
 
