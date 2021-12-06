@@ -36,31 +36,42 @@ func Run(ctx context.Context, client *kubernetes.Client, resource string, config
 		return err
 	}
 
-	errChan := make(chan error, 1)
-	doneChan := make(chan bool, 1)
+	hookErrChan := make(chan error)
+	fwdErrchan := make(chan error)
+	doneChan := make(chan bool)
+
+	cancelCtx, cancel := context.WithCancel(ctx)
 
 	go func() {
 		<-client.Opts.ReadyChannel
 
-		if err := hooks.Post.execute(ctx, config, args, outputs, streams); err != nil {
-			errChan <- err
+		if err := hooks.Post.execute(cancelCtx, config, args, outputs, streams); err != nil {
+			hookErrChan <- err
 		}
 
 		doneChan <- true
 	}()
 
 	go func() {
-		if err := client.Forward(ctx); err != nil {
-			errChan <- err
+		if err := client.Forward(cancelCtx); err != nil {
+			fwdErrchan <- err
 		}
 	}()
 
 	for {
 		select {
-		case err := <-errChan:
+		case err := <-hookErrChan:
+			client.Opts.StopChannel <- struct{}{}
+			cancel()
+
+			return err
+		case err := <-fwdErrchan:
+			cancel()
+
 			return err
 		case <-doneChan:
 			client.Opts.StopChannel <- struct{}{}
+			cancel()
 
 			return nil
 		}
