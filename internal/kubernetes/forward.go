@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"os"
-	"os/signal"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -46,19 +44,6 @@ func runPortForward(ctx context.Context, o portforward.PortForwardOptions) error
 	if pod.Status.Phase != corev1.PodRunning {
 		return fmt.Errorf("unable to forward port because pod is not running. Current status=%v", pod.Status.Phase)
 	}
-
-	signals := make(chan os.Signal, 1)
-	signal.Notify(signals, os.Interrupt)
-
-	defer signal.Stop(signals)
-
-	go func() {
-		<-signals
-
-		if o.StopChannel != nil {
-			close(o.StopChannel)
-		}
-	}()
 
 	req := o.RESTClient.Post().
 		Resource("pods").
