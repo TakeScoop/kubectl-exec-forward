@@ -1,8 +1,10 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"os/signal"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -62,7 +64,18 @@ func newForwardCommand() *cobra.Command {
 				return err
 			}
 
-			return command.Run(ctx, client, args[0], config, cmdArgs, streams)
+			sigChan := make(chan os.Signal, 1)
+			signal.Notify(sigChan, os.Interrupt)
+
+			cancelCtx, cancel := context.WithCancel(ctx)
+
+			go func() {
+				<-sigChan
+
+				cancel()
+			}()
+
+			return command.Run(cancelCtx, client, args[0], config, cmdArgs, streams)
 		},
 	}
 

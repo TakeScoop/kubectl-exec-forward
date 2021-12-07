@@ -38,7 +38,6 @@ func Run(ctx context.Context, client *kubernetes.Client, resource string, config
 
 	hookErrChan := make(chan error)
 	fwdErrchan := make(chan error)
-	doneChan := make(chan bool)
 
 	cancelCtx, cancel := context.WithCancel(ctx)
 
@@ -48,8 +47,6 @@ func Run(ctx context.Context, client *kubernetes.Client, resource string, config
 		if err := hooks.Post.execute(cancelCtx, config, args, outputs, streams); err != nil {
 			hookErrChan <- err
 		}
-
-		doneChan <- true
 	}()
 
 	go func() {
@@ -70,7 +67,7 @@ func Run(ctx context.Context, client *kubernetes.Client, resource string, config
 			cancel()
 
 			return err
-		case <-doneChan:
+		case <-ctx.Done():
 			client.Opts.StopChannel <- struct{}{}
 
 			cancel()
