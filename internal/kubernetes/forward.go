@@ -16,6 +16,7 @@ import (
 	"k8s.io/kubectl/pkg/cmd/portforward"
 )
 
+// PortForwarder is responsible for managing a forwarding connection.
 type PortForwarder genericclioptions.IOStreams
 
 // ForwardPorts is an interface requirement for PortForwarder which handles the port forwarding connection.
@@ -48,10 +49,12 @@ func runPortForward(ctx context.Context, o portforward.PortForwardOptions) error
 
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt)
+
 	defer signal.Stop(signals)
 
 	go func() {
 		<-signals
+
 		if o.StopChannel != nil {
 			close(o.StopChannel)
 		}

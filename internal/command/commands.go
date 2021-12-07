@@ -7,6 +7,7 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
+// Commands stores a slice of commands and provides some helper execution methods.
 type Commands []*Command
 
 // execute runs each command in the calling slice sequentially using the passed config and the outputs accumulated to that point.

@@ -9,6 +9,7 @@ import (
 	"k8s.io/kubectl/pkg/scheme"
 )
 
+// Client represents a Kubernetes Client sufficient to forward to a Kubernetes resource.
 type Client struct {
 	Opts    *portforward.PortForwardOptions
 	builder *resource.Builder
@@ -38,9 +39,5 @@ func (c *Client) Init(getter genericclioptions.RESTClientGetter, cmd *cobra.Comm
 		return err
 	}
 
-	if err := c.Opts.Validate(); err != nil {
-		return err
-	}
-
-	return nil
+	return c.Opts.Validate()
 }

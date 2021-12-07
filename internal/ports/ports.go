@@ -8,6 +8,7 @@ import (
 	"github.com/phayes/freeport"
 )
 
+// Ports store port mapping information.
 type Ports struct {
 	Local  int
 	Remote interface{}

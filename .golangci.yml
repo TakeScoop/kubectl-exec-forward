@@ -1,0 +1,21 @@
+run:
+  deadline: 15m
+linters:
+  enable-all: true
+  disable:
+    - interfacer
+    - testpackage
+    - goerr113
+    - scopelint
+    - gomnd
+    - exhaustivestruct
+    - lll
+    - funlen
+    - wrapcheck
+    - paralleltest
+    - cyclop
+    - maligned
+    - stylecheck
+    - varnamelen
+issues:
+  exclude-use-default: false

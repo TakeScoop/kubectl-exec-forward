@@ -62,11 +62,7 @@ func newForwardCommand() *cobra.Command {
 				return err
 			}
 
-			if err := command.Run(ctx, client, args[0], config, cmdArgs, streams); err != nil {
-				return err
-			}
-
-			return nil
+			return command.Run(ctx, client, args[0], config, cmdArgs, streams)
 		},
 	}
 
@@ -103,6 +99,7 @@ func parseArgFlag(cmd *cobra.Command) (map[string]string, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return cmdArgs, nil
 }
 
