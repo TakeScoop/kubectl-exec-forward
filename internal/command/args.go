@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 )
 
+// Args store command specific arguments to be passed to the hook commands.
 type Args map[string]string
 
 // parseArgs parses key value pairs from the passed annotations map, adds any overrides passed and returns a new args map.

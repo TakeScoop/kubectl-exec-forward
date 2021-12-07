@@ -62,6 +62,7 @@ func Run(ctx context.Context, client *kubernetes.Client, resource string, config
 		select {
 		case err := <-hookErrChan:
 			client.Opts.StopChannel <- struct{}{}
+
 			cancel()
 
 			return err
@@ -71,6 +72,7 @@ func Run(ctx context.Context, client *kubernetes.Client, resource string, config
 			return err
 		case <-doneChan:
 			client.Opts.StopChannel <- struct{}{}
+
 			cancel()
 
 			return nil
