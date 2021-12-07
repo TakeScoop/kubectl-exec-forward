@@ -13,6 +13,7 @@ import (
 type Client struct {
 	Opts    *portforward.PortForwardOptions
 	builder *resource.Builder
+	factory cmdutil.Factory
 }
 
 // New returns a client to interact with Kubernetes.
@@ -30,6 +31,8 @@ func New(streams *genericclioptions.IOStreams) *Client {
 // Init initializes the client with the appropriate information gathered from the cluster and passed args.
 func (c *Client) Init(getter genericclioptions.RESTClientGetter, cmd *cobra.Command, args []string) error {
 	f := cmdutil.NewFactory(getter)
+
+	c.factory = f
 
 	c.builder = f.NewBuilder().
 		WithScheme(scheme.Scheme, scheme.Scheme.PrioritizedVersionsAllGroups()...).

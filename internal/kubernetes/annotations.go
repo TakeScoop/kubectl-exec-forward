@@ -1,14 +1,13 @@
 package kubernetes
 
 import (
-	"fmt"
+	"time"
 
-	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
+	"k8s.io/kubectl/pkg/polymorphichelpers"
 )
 
-// GetAnnotations queries for the passed resource and returns the annotations for the found object.
-func (c Client) GetAnnotations(resource string) (map[string]string, error) {
+// GetPodAnnotations finds an attachable pod from the passed type/name, and returns the annotations from that pod.
+func (c Client) GetPodAnnotations(resource string, podTimeout time.Duration) (map[string]string, error) {
 	obj, err := c.builder.
 		ResourceNames("pods", resource).
 		NamespaceParam(c.Opts.Namespace).
@@ -19,16 +18,10 @@ func (c Client) GetAnnotations(resource string) (map[string]string, error) {
 		return nil, err
 	}
 
-	switch t := obj.(type) {
-	case *corev1.Service:
-		return t.Annotations, nil
-	case *corev1.Pod:
-		return t.Annotations, nil
-	case *appsv1.Deployment:
-		return t.Annotations, nil
-	case *appsv1.StatefulSet:
-		return t.Annotations, nil
-	default:
-		return nil, fmt.Errorf("resource type %q not supported", resource)
+	forwardablePod, err := polymorphichelpers.AttachablePodForObjectFn(c.factory, obj, podTimeout)
+	if err != nil {
+		return nil, err
 	}
+
+	return forwardablePod.Annotations, nil
 }
