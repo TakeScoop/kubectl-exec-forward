@@ -18,7 +18,7 @@ func (c Client) GetPodAnnotations(resource string, podTimeout time.Duration) (ma
 		return nil, err
 	}
 
-	forwardablePod, err := polymorphichelpers.AttachablePodForObjectFn(c.factory, obj, podTimeout)
+	forwardablePod, err := polymorphichelpers.AttachablePodForObjectFn(*c.factory, obj, podTimeout)
 	if err != nil {
 		return nil, err
 	}
