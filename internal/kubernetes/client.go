@@ -29,8 +29,8 @@ func New(streams *genericclioptions.IOStreams) *Client {
 }
 
 // Init initializes the client with the appropriate information gathered from the cluster and passed args.
-func (c *Client) Init(f cmdutil.Factory, cmd *cobra.Command, args []string) error {
-	// f := cmdutil.NewFactory(getter)
+func (c *Client) Init(getter genericclioptions.RESTClientGetter, cmd *cobra.Command, args []string) error {
+	f := cmdutil.NewFactory(getter)
 
 	c.factory = &f
 

@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/cli-runtime/pkg/resource"
 	"k8s.io/client-go/rest/fake"
 	"k8s.io/kubectl/pkg/cmd/portforward"
 	cmdtesting "k8s.io/kubectl/pkg/cmd/testing"
@@ -50,7 +51,7 @@ func (f *fakePortForwarder) ForwardPorts(method string, url *url.URL, opts portf
 
 func TestGetPodAnnotations(t *testing.T) {
 	codec := scheme.Codecs.LegacyCodec(scheme.Scheme.PrioritizedVersionsAllGroups()...)
-	ns := scheme.Codecs.WithoutConversion()
+	// ns := scheme.Codecs.WithoutConversion()
 
 	tf := cmdtesting.NewTestFactory().WithNamespace("test")
 	defer tf.Cleanup()
@@ -60,7 +61,7 @@ func TestGetPodAnnotations(t *testing.T) {
 	tf.Client = &fake.RESTClient{
 		VersionedAPIPath:     "/api/v1",
 		GroupVersion:         schema.GroupVersion{Group: "", Version: "v1"},
-		NegotiatedSerializer: ns,
+		NegotiatedSerializer: resource.UnstructuredPlusDefaultContentConfig().NegotiatedSerializer,
 		Client: fake.CreateHTTPClient(func(req *http.Request) (*http.Response, error) {
 			switch _, m := req.URL.Path, req.Method; {
 			case m == "GET":

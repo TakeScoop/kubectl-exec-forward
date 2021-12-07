@@ -1,6 +1,7 @@
 package kubernetes
 
 import (
+	"fmt"
 	"time"
 
 	"k8s.io/kubectl/pkg/polymorphichelpers"
@@ -15,6 +16,7 @@ func (c Client) GetPodAnnotations(resource string, podTimeout time.Duration) (ma
 		Do().
 		Object()
 	if err != nil {
+		fmt.Println(obj, err)
 		return nil, err
 	}
 
