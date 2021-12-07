@@ -16,5 +16,6 @@ linters:
     - cyclop
     - maligned
     - stylecheck
+    - varnamelen
 issues:
   exclude-use-default: false
