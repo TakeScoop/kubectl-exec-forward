@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/takescoop/kubectl-port-forward-hooks/internal/command"
 )
 
 func TestParseArgs(t *testing.T) {
@@ -27,5 +28,20 @@ func TestParseArgs(t *testing.T) {
 	t.Run("Error on malformed kv input", func(t *testing.T) {
 		_, err := parseArgs([]string{"foo bar"})
 		assert.Error(t, err)
+	})
+}
+
+func TestParseConfig(t *testing.T) {
+	t.Run("Parse basic config", func(t *testing.T) {
+		cmd := newForwardCommand()
+		config, err := parseConfig(cmd, []string{"svc/test", "8080"})
+
+		assert.NoError(t, err)
+
+		assert.Equal(t, &command.Config{
+			LocalPort:  8080,
+			Verbose:    false,
+			PodTimeout: 500,
+		}, config)
 	})
 }
