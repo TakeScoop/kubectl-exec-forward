@@ -38,18 +38,23 @@ func newForwardCommand() *cobra.Command {
 		Args:  cobra.MinimumNArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
+			flags := cmd.Flags()
+
+			config := &command.Config{}
 
 			ports, err := ports.Parse(args[1])
 			if err != nil {
 				return err
 			}
+			config.LocalPort = ports.Local
 
-			if err := client.Init(cmdutil.NewMatchVersionFlags(kubeConfigFlags), cmd, []string{args[0], ports.Map}); err != nil {
+			v, err := flags.GetBool("verbose")
+			if err != nil {
 				return err
 			}
+			config.Verbose = v
 
-			config, err := parseConfig(cmd, args)
-			if err != nil {
+			if err := client.Init(cmdutil.NewMatchVersionFlags(kubeConfigFlags), cmd, []string{args[0], ports.Map}); err != nil {
 				return err
 			}
 
@@ -91,29 +96,6 @@ func Execute() {
 	cmd := newForwardCommand()
 
 	cobra.CheckErr(cmd.Execute())
-}
-
-// parseConfig parses CLI inputs into a config object.
-func parseConfig(cmd *cobra.Command, args []string) (*command.Config, error) {
-	flags := cmd.Flags()
-
-	ports, err := ports.Parse(args[1])
-	if err != nil {
-		return nil, err
-	}
-
-	config := &command.Config{
-		LocalPort: ports.Local,
-	}
-
-	v, err := flags.GetBool("verbose")
-	if err != nil {
-		return nil, err
-	}
-
-	config.Verbose = v
-
-	return config, nil
 }
 
 // parseArgFlag parses the passed command line --args into a key value map.
