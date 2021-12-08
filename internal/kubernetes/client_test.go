@@ -50,11 +50,7 @@ func newTestClient(t *testing.T, tf *cmdtesting.TestFactory, args []string, http
 	assert.NoError(t, opts.Complete(tf, cmd, args))
 
 	client := &Client{
-		Opts:    opts,
-		factory: tf,
-		builder: tf.NewBuilder().
-			WithScheme(scheme.Scheme, scheme.Scheme.PrioritizedVersionsAllGroups()...).
-			ContinueOnError(),
+		Opts: opts,
 	}
 
 	assert.NoError(t, opts.Validate())

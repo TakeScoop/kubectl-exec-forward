@@ -69,7 +69,7 @@ func newForwardCommand() *cobra.Command {
 				cancel()
 			}()
 
-			return command.Run(cancelCtx, client, args[0], config, cmdArgs, streams)
+			return command.Run(cancelCtx, client, config, cmdArgs, streams)
 		},
 	}
 
