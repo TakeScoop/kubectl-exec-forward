@@ -15,6 +15,8 @@ import (
 
 func TestGetPodAnnotations(t *testing.T) {
 	t.Run("get simple annotations from a pod", func(t *testing.T) {
+		ctx := context.Background()
+
 		testFactory := cmdtesting.NewTestFactory().WithNamespace("test")
 		defer testFactory.Cleanup()
 
@@ -32,7 +34,7 @@ func TestGetPodAnnotations(t *testing.T) {
 
 		client := newTestClient(t, testFactory, args, httpClient)
 
-		a, err := client.GetPodAnnotations(context.TODO(), args[0])
+		a, err := client.GetPodAnnotations(ctx)
 		assert.NoError(t, err)
 
 		assert.Equal(t, map[string]string{"foo": "bar"}, a)
