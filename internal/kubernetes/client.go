@@ -1,6 +1,8 @@
 package kubernetes
 
 import (
+	"time"
+
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/cli-runtime/pkg/resource"
@@ -11,9 +13,10 @@ import (
 
 // Client represents a Kubernetes Client sufficient to forward to a Kubernetes resource.
 type Client struct {
-	Opts    *portforward.PortForwardOptions
-	builder *resource.Builder
-	factory *cmdutil.Factory
+	Opts       *portforward.PortForwardOptions
+	builder    *resource.Builder
+	factory    cmdutil.Factory
+	PodTimeout time.Duration
 }
 
 // New returns a client to interact with Kubernetes.
@@ -32,11 +35,18 @@ func New(streams *genericclioptions.IOStreams) *Client {
 func (c *Client) Init(getter genericclioptions.RESTClientGetter, cmd *cobra.Command, args []string) error {
 	f := cmdutil.NewFactory(getter)
 
-	c.factory = &f
+	c.factory = f
 
 	c.builder = f.NewBuilder().
 		WithScheme(scheme.Scheme, scheme.Scheme.PrioritizedVersionsAllGroups()...).
 		ContinueOnError()
+
+	pto, err := cmdutil.GetPodRunningTimeoutFlag(cmd)
+	if err != nil {
+		return err
+	}
+
+	c.PodTimeout = pto
 
 	if err := c.Opts.Complete(f, cmd, args); err != nil {
 		return err

@@ -1,29 +1,17 @@
 package kubernetes
 
 import (
-	"fmt"
-	"time"
+	"context"
 
-	"k8s.io/kubectl/pkg/polymorphichelpers"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // GetPodAnnotations finds an attachable pod from the passed type/name, and returns the annotations from that pod.
-func (c Client) GetPodAnnotations(resource string, podTimeout time.Duration) (map[string]string, error) {
-	obj, err := c.builder.
-		ResourceNames("pods", resource).
-		NamespaceParam(c.Opts.Namespace).
-		DefaultNamespace().
-		Do().
-		Object()
-	if err != nil {
-		fmt.Println(obj, err)
-		return nil, err
-	}
-
-	forwardablePod, err := polymorphichelpers.AttachablePodForObjectFn(*c.factory, obj, podTimeout)
+func (c Client) GetPodAnnotations(ctx context.Context, resource string) (map[string]string, error) {
+	p, err := c.Opts.PodClient.Pods(c.Opts.Namespace).Get(ctx, c.Opts.PodName, v1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	return forwardablePod.Annotations, nil
+	return p.Annotations, nil
 }

@@ -33,15 +33,14 @@ func TestParseArgs(t *testing.T) {
 
 func TestParseConfig(t *testing.T) {
 	t.Run("Parse basic config", func(t *testing.T) {
-		cmd := newForwardCommand()
+		cmd := NewForwardCommand()
 		config, err := parseConfig(cmd, []string{"svc/test", "8080"})
 
 		assert.NoError(t, err)
 
 		assert.Equal(t, &command.Config{
-			LocalPort:  8080,
-			Verbose:    false,
-			PodTimeout: 500,
+			LocalPort: 8080,
+			Verbose:   false,
 		}, config)
 	})
 }
