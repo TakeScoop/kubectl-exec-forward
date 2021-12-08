@@ -19,21 +19,14 @@ func TestGetPodAnnotations(t *testing.T) {
 		defer testFactory.Cleanup()
 
 		httpClient := fake.CreateHTTPClient(func(req *http.Request) (*http.Response, error) {
-			switch p, m := req.URL.Path, req.Method; {
-			case p == "/api/v1/namespaces/test/pods/foo" && m == "GET":
-				body := cmdtesting.ObjBody(scheme.Codecs.LegacyCodec(scheme.Scheme.PrioritizedVersionsAllGroups()...), &v1.Pod{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:        "foo",
-						Annotations: map[string]string{"foo": "bar"},
-					},
-				})
+			body := cmdtesting.ObjBody(scheme.Codecs.LegacyCodec(scheme.Scheme.PrioritizedVersionsAllGroups()...), &v1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "foo",
+					Annotations: map[string]string{"foo": "bar"},
+				},
+			})
 
-				return &http.Response{StatusCode: http.StatusOK, Header: cmdtesting.DefaultHeader(), Body: body}, nil
-			default:
-				t.Errorf("unexpected request: %#v\n%#v", req.URL, req)
-
-				return nil, nil
-			}
+			return &http.Response{StatusCode: http.StatusOK, Header: cmdtesting.DefaultHeader(), Body: body}, nil
 		})
 		args := []string{"pod/foo", "8080:80"}
 

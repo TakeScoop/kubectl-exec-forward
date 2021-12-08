@@ -17,6 +17,5 @@ linters:
     - maligned
     - stylecheck
     - varnamelen
-    - nilnil
 issues:
   exclude-use-default: false

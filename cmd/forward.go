@@ -16,8 +16,8 @@ import (
 	cmdutil "k8s.io/kubectl/pkg/cmd/util"
 )
 
-// NewForwardCommand returns the command for forwarding to Kubernetes resources.
-func NewForwardCommand() *cobra.Command {
+// newForwardCommand returns the command for forwarding to Kubernetes resources.
+func newForwardCommand() *cobra.Command {
 	flags := pflag.NewFlagSet("kubectl-plugin", pflag.ExitOnError)
 	pflag.CommandLine = flags
 
@@ -88,7 +88,7 @@ func NewForwardCommand() *cobra.Command {
 
 // Execute executes the forward command.
 func Execute() {
-	cmd := NewForwardCommand()
+	cmd := newForwardCommand()
 
 	cobra.CheckErr(cmd.Execute())
 }

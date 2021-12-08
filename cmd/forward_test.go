@@ -33,7 +33,7 @@ func TestParseArgs(t *testing.T) {
 
 func TestParseConfig(t *testing.T) {
 	t.Run("Parse basic config", func(t *testing.T) {
-		cmd := NewForwardCommand()
+		cmd := newForwardCommand()
 		config, err := parseConfig(cmd, []string{"svc/test", "8080"})
 
 		assert.NoError(t, err)
