@@ -1,93 +1,97 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"os/signal"
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
-	"github.com/takescoop/kubectl-port-forward-hooks/internal/command"
-	"github.com/takescoop/kubectl-port-forward-hooks/internal/kubernetes"
-	"github.com/takescoop/kubectl-port-forward-hooks/internal/ports"
+	"github.com/takescoop/kubectl-port-forward-hooks/internal/forwarder"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
+	"k8s.io/client-go/tools/clientcmd"
 	cmdutil "k8s.io/kubectl/pkg/cmd/util"
 )
 
 // newForwardCommand returns the command for forwarding to Kubernetes resources.
 func newForwardCommand() *cobra.Command {
-	flags := pflag.NewFlagSet("kubectl-plugin", pflag.ExitOnError)
-	pflag.CommandLine = flags
+	overrides := clientcmd.ConfigOverrides{}
 
-	kubeResouceBuilderFlags := genericclioptions.NewResourceBuilderFlags()
-	kubeConfigFlags := genericclioptions.NewConfigFlags(false)
-
-	streams := &genericclioptions.IOStreams{
-		Out:    os.Stdout,
-		ErrOut: os.Stderr,
-		In:     os.Stdin,
-	}
-
-	client := kubernetes.New(streams)
+	kubeConfigFlags := genericclioptions.NewConfigFlags(true).WithDeprecatedPasswordFlag()
 
 	cmd := &cobra.Command{
 		Use:   "kubectl port forward hooks TYPE/NAME PORTS [options]",
 		Short: "Port forward to Kubernetes resources and execute commands found in annotations",
 		Args:  cobra.MinimumNArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ctx := cmd.Context()
 			flags := cmd.Flags()
 
-			config := &command.Config{}
-
-			ports, err := ports.Parse(args[1])
+			namespace, err := flags.GetString("namespace")
 			if err != nil {
 				return err
 			}
 
-			config.LocalPort = ports.Local
+			if namespace == "" {
+				namespace = "default"
+			}
 
-			v, err := flags.GetBool("verbose")
+			client, err := forwarder.NewClient(overrides, cmdutil.NewMatchVersionFlags(kubeConfigFlags))
 			if err != nil {
 				return err
 			}
-			config.Verbose = v
 
-			if err := client.Init(cmdutil.NewMatchVersionFlags(kubeConfigFlags), cmd, []string{args[0], ports.Map}); err != nil {
+			obj, err := client.GetResource(namespace, args[0])
+			if err != nil {
 				return err
 			}
 
-			cmdArgs, err := parseArgFlag(cmd)
+			pod, err := client.GetPod(obj)
 			if err != nil {
 				return err
+			}
+
+			ports, err := client.TranslatePorts(obj, pod, args[1:])
+			if err != nil {
+				return err
+			}
+
+			stopChan := make(chan struct{})
+			readyChan := make(chan struct{})
+			errChan := make(chan error)
+
+			streams := genericclioptions.IOStreams{
+				Out:    os.Stdout,
+				ErrOut: os.Stderr,
+				In:     os.Stdin,
 			}
 
 			sigChan := make(chan os.Signal, 1)
 			signal.Notify(sigChan, os.Interrupt)
 
-			cancelCtx, cancel := context.WithCancel(ctx)
-
 			go func() {
-				<-sigChan
-
-				cancel()
+				<-readyChan
 			}()
 
-			return command.Run(cancelCtx, client, config, cmdArgs, streams)
+			go func() {
+				if err := client.Forward(namespace, pod.Name, ports, readyChan, stopChan, streams); err != nil {
+					errChan <- err
+				}
+			}()
+
+			for {
+				select {
+				case err := <-errChan:
+					stopChan <- struct{}{}
+					return err
+				case <-sigChan:
+					stopChan <- struct{}{}
+					return nil
+				}
+			}
 		},
 	}
 
-	flags.AddFlagSet(cmd.PersistentFlags())
-	kubeConfigFlags.AddFlags(flags)
-	kubeResouceBuilderFlags.AddFlags(flags)
-
-	cmdutil.AddPodRunningTimeoutFlag(cmd, 500)
-	cmd.Flags().StringSliceVar(&client.Opts.Address, "address", []string{"localhost"}, "Addresses to listen on (comma separated). Only accepts IP addresses or localhost as a value. When localhost is supplied, kubectl will try to bind on both 127.0.0.1 and ::1 and will fail if neither of these addresses are available to bind.")
-
-	cmd.Flags().StringArray("arg", []string{}, "key=value arguments to be passed to commands")
-	cmd.Flags().Bool("verbose", false, "Whether to write command outputs to console")
+	clientcmd.BindOverrideFlags(&overrides, cmd.PersistentFlags(), clientcmd.RecommendedConfigOverrideFlags(""))
 
 	return cmd
 }
