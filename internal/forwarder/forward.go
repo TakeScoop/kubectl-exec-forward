@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/tools/portforward"
 	"k8s.io/client-go/transport/spdy"
 )
@@ -41,7 +40,7 @@ func (c Client) NewForwardConfig(namespace string, resource string, portMap []st
 }
 
 // Forward creates a port-forwarding connection with the target noted by the ForwardConfig object.
-func (c Client) Forward(config *ForwardConfig, readyChan chan struct{}, stopChan chan struct{}, streams *genericclioptions.IOStreams) error {
+func (c Client) Forward(config *ForwardConfig, readyChan chan struct{}, stopChan chan struct{}) error {
 	transport, upgrader, err := spdy.RoundTripperFor(c.restConfig)
 	if err != nil {
 		return err
@@ -58,7 +57,7 @@ func (c Client) Forward(config *ForwardConfig, readyChan chan struct{}, stopChan
 
 	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, "POST", url)
 
-	fw, err := portforward.New(dialer, config.Ports, stopChan, readyChan, streams.Out, streams.ErrOut)
+	fw, err := portforward.New(dialer, config.Ports, stopChan, readyChan, c.streams.Out, c.streams.ErrOut)
 	if err != nil {
 		return err
 	}

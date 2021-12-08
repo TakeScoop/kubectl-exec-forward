@@ -43,7 +43,7 @@ func newForwardCommand(streams *genericclioptions.IOStreams) *cobra.Command {
 				return err
 			}
 
-			client := forwarder.NewClient(cmdutil.NewMatchVersionFlags(kubeConfigFlags), podTimeout)
+			client := forwarder.NewClient(cmdutil.NewMatchVersionFlags(kubeConfigFlags), podTimeout, streams)
 			if err := client.Init(overrides); err != nil {
 				return err
 			}

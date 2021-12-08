@@ -52,7 +52,7 @@ func Run(ctx context.Context, client *forwarder.Client, config *Config, cliArgs 
 	}()
 
 	go func() {
-		if err := client.Forward(fwdConfig, readyChan, stopChan, streams); err != nil {
+		if err := client.Forward(fwdConfig, readyChan, stopChan); err != nil {
 			fwdErrChan <- err
 		}
 	}()
