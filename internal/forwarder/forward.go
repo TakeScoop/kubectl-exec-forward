@@ -15,7 +15,7 @@ type ForwardConfig struct {
 	Ports     []string
 }
 
-// NewForwardConfig interacts with the Kubernetes API to find a the pods and ports required to forward to a target.
+// NewForwardConfig interacts with the Kubernetes API to find a pod and ports suitable for forwarding.
 func (c Client) NewForwardConfig(namespace string, resource string, portMap []string) (*ForwardConfig, error) {
 	obj, err := c.getResource(namespace, resource)
 	if err != nil {
@@ -39,7 +39,7 @@ func (c Client) NewForwardConfig(namespace string, resource string, portMap []st
 	}, nil
 }
 
-// Forward creates a port-forwarding connection with the target noted by the ForwardConfig object.
+// Forward creates a port-forwarding connection to the target noted by the ForwardConfig object.
 func (c Client) Forward(config *ForwardConfig, readyChan chan struct{}, stopChan chan struct{}) error {
 	transport, upgrader, err := spdy.RoundTripperFor(c.restConfig)
 	if err != nil {

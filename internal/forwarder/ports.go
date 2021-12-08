@@ -1,5 +1,5 @@
 /*
-Many of the functions here were borrowed from kubernetes/kubectl repo. They are private and cannot be used directly.
+Many of the functions here are borrowed from kubernetes/kubectl repo. They are private and cannot be used directly.
 https://github.com/kubernetes/kubectl/blob/0b0920722212395d20fd0eecb5abf45ecb3e0cac/pkg/cmd/portforward/portforward.go
 */
 package forwarder
