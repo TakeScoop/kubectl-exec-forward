@@ -1,4 +1,4 @@
-package command
+package hooks
 
 // Hooks store information regarding command hooks.
 type Hooks struct {

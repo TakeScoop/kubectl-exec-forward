@@ -1,4 +1,4 @@
-package command
+package hooks
 
 // Output stores command output.
 type Output struct {

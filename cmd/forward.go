@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/signal"
@@ -8,13 +9,14 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/takescoop/kubectl-port-forward-hooks/internal/forwarder"
+	"github.com/takescoop/kubectl-port-forward-hooks/internal/hooks"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/tools/clientcmd"
 	cmdutil "k8s.io/kubectl/pkg/cmd/util"
 )
 
 // newForwardCommand returns the command for forwarding to Kubernetes resources.
-func newForwardCommand() *cobra.Command {
+func newForwardCommand(streams *genericclioptions.IOStreams) *cobra.Command {
 	overrides := clientcmd.ConfigOverrides{}
 
 	kubeConfigFlags := genericclioptions.NewConfigFlags(true).WithDeprecatedPasswordFlag()
@@ -24,6 +26,7 @@ func newForwardCommand() *cobra.Command {
 		Short: "Port forward to Kubernetes resources and execute commands found in annotations",
 		Args:  cobra.MinimumNArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := cmd.Context()
 			flags := cmd.Flags()
 
 			namespace, err := flags.GetString("namespace")
@@ -35,61 +38,48 @@ func newForwardCommand() *cobra.Command {
 				namespace = "default"
 			}
 
-			client, err := forwarder.NewClient(overrides, cmdutil.NewMatchVersionFlags(kubeConfigFlags))
+			podTimeout, err := flags.GetDuration("pod-timeout")
 			if err != nil {
 				return err
 			}
 
-			obj, err := client.GetResource(namespace, args[0])
-			if err != nil {
+			client := forwarder.NewClient(cmdutil.NewMatchVersionFlags(kubeConfigFlags), podTimeout)
+			if err := client.Init(overrides); err != nil {
 				return err
-			}
-
-			pod, err := client.GetPod(obj)
-			if err != nil {
-				return err
-			}
-
-			ports, err := client.TranslatePorts(obj, pod, args[1:])
-			if err != nil {
-				return err
-			}
-
-			stopChan := make(chan struct{})
-			readyChan := make(chan struct{})
-			errChan := make(chan error)
-
-			streams := genericclioptions.IOStreams{
-				Out:    os.Stdout,
-				ErrOut: os.Stderr,
-				In:     os.Stdin,
 			}
 
 			sigChan := make(chan os.Signal, 1)
 			signal.Notify(sigChan, os.Interrupt)
 
-			go func() {
-				<-readyChan
-			}()
+			cancelCtx, cancel := context.WithCancel(ctx)
 
 			go func() {
-				if err := client.Forward(namespace, pod.Name, ports, readyChan, stopChan, streams); err != nil {
-					errChan <- err
-				}
+				<-sigChan
+
+				cancel()
 			}()
 
-			for {
-				select {
-				case err := <-errChan:
-					stopChan <- struct{}{}
-					return err
-				case <-sigChan:
-					stopChan <- struct{}{}
-					return nil
-				}
+			cmdArgs, err := parseArgFlag(cmd)
+			if err != nil {
+				return err
 			}
+
+			config := &hooks.Config{}
+
+			v, err := flags.GetBool("verbose")
+			if err != nil {
+				return err
+			}
+
+			config.Verbose = v
+
+			return hooks.Run(cancelCtx, client, config, cmdArgs, namespace, args[0], args[1:], streams)
 		},
 	}
+
+	cmd.Flags().StringArray("arg", []string{}, "key=value arguments to be passed to commands")
+	cmd.Flags().Bool("verbose", false, "Whether to write command outputs to console")
+	cmd.Flags().Duration("pod-timeout", 500, "Time to wait for an attachable pod to become available")
 
 	clientcmd.BindOverrideFlags(&overrides, cmd.PersistentFlags(), clientcmd.RecommendedConfigOverrideFlags(""))
 
@@ -98,7 +88,13 @@ func newForwardCommand() *cobra.Command {
 
 // Execute executes the forward command.
 func Execute() {
-	cmd := newForwardCommand()
+	streams := &genericclioptions.IOStreams{
+		Out:    os.Stdout,
+		ErrOut: os.Stderr,
+		In:     os.Stdin,
+	}
+
+	cmd := newForwardCommand(streams)
 
 	cobra.CheckErr(cmd.Execute())
 }

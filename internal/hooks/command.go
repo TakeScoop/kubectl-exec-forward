@@ -1,4 +1,4 @@
-package command
+package hooks
 
 import (
 	"bytes"
