@@ -1,34 +1,17 @@
 package kubernetes
 
 import (
-	"fmt"
+	"context"
 
-	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// GetAnnotations queries for the passed resource and returns the annotations for the found object.
-func (c Client) GetAnnotations(resource string) (map[string]string, error) {
-	obj, err := c.builder.
-		ResourceNames("pods", resource).
-		NamespaceParam(c.Opts.Namespace).
-		DefaultNamespace().
-		Do().
-		Object()
+// GetPodAnnotations finds an attachable pod from the passed type/name, and returns the annotations from that pod.
+func (c Client) GetPodAnnotations(ctx context.Context) (map[string]string, error) {
+	p, err := c.Opts.PodClient.Pods(c.Opts.Namespace).Get(ctx, c.Opts.PodName, v1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	switch t := obj.(type) {
-	case *corev1.Service:
-		return t.Annotations, nil
-	case *corev1.Pod:
-		return t.Annotations, nil
-	case *appsv1.Deployment:
-		return t.Annotations, nil
-	case *appsv1.StatefulSet:
-		return t.Annotations, nil
-	default:
-		return nil, fmt.Errorf("resource type %q not supported", resource)
-	}
+	return p.Annotations, nil
 }
