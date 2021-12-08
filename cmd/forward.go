@@ -46,6 +46,7 @@ func newForwardCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
+
 			config.LocalPort = ports.Local
 
 			v, err := flags.GetBool("verbose")
