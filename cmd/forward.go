@@ -16,10 +16,16 @@ import (
 )
 
 // newForwardCommand returns the command for forwarding to Kubernetes resources.
-func newForwardCommand(streams *genericclioptions.IOStreams) *cobra.Command {
+func newForwardCommand() *cobra.Command {
 	overrides := clientcmd.ConfigOverrides{}
 
 	kubeConfigFlags := genericclioptions.NewConfigFlags(true).WithDeprecatedPasswordFlag()
+
+	streams := &genericclioptions.IOStreams{
+		Out:    os.Stdout,
+		ErrOut: os.Stderr,
+		In:     os.Stdin,
+	}
 
 	cmd := &cobra.Command{
 		Use:   "kubectl port forward hooks TYPE/NAME PORTS [options]",
@@ -88,13 +94,7 @@ func newForwardCommand(streams *genericclioptions.IOStreams) *cobra.Command {
 
 // Execute executes the forward command.
 func Execute() {
-	streams := &genericclioptions.IOStreams{
-		Out:    os.Stdout,
-		ErrOut: os.Stderr,
-		In:     os.Stdin,
-	}
-
-	cmd := newForwardCommand(streams)
+	cmd := newForwardCommand()
 
 	cobra.CheckErr(cmd.Execute())
 }
