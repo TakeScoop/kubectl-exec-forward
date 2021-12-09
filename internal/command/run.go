@@ -3,7 +3,7 @@ package command
 import (
 	"context"
 
-	"github.com/takescoop/kubectl-port-forward-hooks/internal/kubernetes"
+	"github.com/takescoop/kubectl-port-forward-hooks/internal/forwarder"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
@@ -13,19 +13,19 @@ const (
 	postAnnotation string = "local.service.kubernetes.io/post"
 )
 
-// Run executes commands found on the passed resource's annotations and opens a forwarding connection to the resource.
-func Run(ctx context.Context, client *kubernetes.Client, config *Config, cliArgs map[string]string, streams *genericclioptions.IOStreams) error {
-	annotations, err := client.GetPodAnnotations(ctx)
+// Run executes hooks found on the passed resource's underlying pod annotations and opens a forwarding connection to the resource.
+func Run(ctx context.Context, client *forwarder.Client, config *Config, cliArgs map[string]string, resource string, portMap []string, streams *genericclioptions.IOStreams) error {
+	fwdConfig, err := client.NewForwardConfig(resource, portMap)
 	if err != nil {
 		return err
 	}
 
-	args, err := parseArgs(annotations, cliArgs)
+	args, err := parseArgs(fwdConfig.Pod.Annotations, cliArgs)
 	if err != nil {
 		return err
 	}
 
-	hooks, err := newHooks(annotations)
+	hooks, err := newHooks(fwdConfig.Pod.Annotations)
 	if err != nil {
 		return err
 	}
@@ -37,12 +37,14 @@ func Run(ctx context.Context, client *kubernetes.Client, config *Config, cliArgs
 	}
 
 	hookErrChan := make(chan error)
-	fwdErrchan := make(chan error)
+	fwdErrChan := make(chan error)
+	stopChan := make(chan struct{})
+	readyChan := make(chan struct{})
 
 	cancelCtx, cancel := context.WithCancel(ctx)
 
 	go func() {
-		<-client.Opts.ReadyChannel
+		<-readyChan
 
 		if err := hooks.Post.execute(cancelCtx, config, args, outputs, streams); err != nil {
 			hookErrChan <- err
@@ -50,25 +52,25 @@ func Run(ctx context.Context, client *kubernetes.Client, config *Config, cliArgs
 	}()
 
 	go func() {
-		if err := client.Forward(cancelCtx); err != nil {
-			fwdErrchan <- err
+		if err := client.Forward(fwdConfig, readyChan, stopChan); err != nil {
+			fwdErrChan <- err
 		}
 	}()
 
 	for {
 		select {
 		case err := <-hookErrChan:
-			client.Opts.StopChannel <- struct{}{}
+			stopChan <- struct{}{}
 
 			cancel()
 
 			return err
-		case err := <-fwdErrchan:
+		case err := <-fwdErrChan:
 			cancel()
 
 			return err
 		case <-ctx.Done():
-			client.Opts.StopChannel <- struct{}{}
+			stopChan <- struct{}{}
 
 			cancel()
 

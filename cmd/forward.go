@@ -8,20 +8,17 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 	"github.com/takescoop/kubectl-port-forward-hooks/internal/command"
-	"github.com/takescoop/kubectl-port-forward-hooks/internal/kubernetes"
-	"github.com/takescoop/kubectl-port-forward-hooks/internal/ports"
+	"github.com/takescoop/kubectl-port-forward-hooks/internal/forwarder"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
+	"k8s.io/client-go/tools/clientcmd"
 	cmdutil "k8s.io/kubectl/pkg/cmd/util"
 )
 
 // newForwardCommand returns the command for forwarding to Kubernetes resources.
 func newForwardCommand() *cobra.Command {
-	flags := pflag.NewFlagSet("kubectl-plugin", pflag.ExitOnError)
-	pflag.CommandLine = flags
+	overrides := clientcmd.ConfigOverrides{}
 
-	kubeResouceBuilderFlags := genericclioptions.NewResourceBuilderFlags()
 	kubeConfigFlags := genericclioptions.NewConfigFlags(false)
 
 	streams := &genericclioptions.IOStreams{
@@ -29,8 +26,6 @@ func newForwardCommand() *cobra.Command {
 		ErrOut: os.Stderr,
 		In:     os.Stdin,
 	}
-
-	client := kubernetes.New(streams)
 
 	cmd := &cobra.Command{
 		Use:   "kubectl port forward hooks TYPE/NAME PORTS [options]",
@@ -40,32 +35,32 @@ func newForwardCommand() *cobra.Command {
 			ctx := cmd.Context()
 			flags := cmd.Flags()
 
-			config := &command.Config{}
-
-			ports, err := ports.Parse(args[1])
+			podTimeout, err := flags.GetDuration("pod-timeout")
 			if err != nil {
 				return err
 			}
 
-			config.LocalPort = ports.Local
-
-			v, err := flags.GetBool("verbose")
-			if err != nil {
+			client := forwarder.NewClient(cmdutil.NewMatchVersionFlags(kubeConfigFlags), podTimeout, streams)
+			if err := client.Init(overrides); err != nil {
 				return err
 			}
-			config.Verbose = v
 
-			if err := client.Init(cmdutil.NewMatchVersionFlags(kubeConfigFlags), cmd, []string{args[0], ports.Map}); err != nil {
-				return err
-			}
+			sigChan := make(chan os.Signal, 1)
+			signal.Notify(sigChan, os.Interrupt)
 
 			cmdArgs, err := parseArgFlag(cmd)
 			if err != nil {
 				return err
 			}
 
-			sigChan := make(chan os.Signal, 1)
-			signal.Notify(sigChan, os.Interrupt)
+			config := &command.Config{}
+
+			v, err := flags.GetBool("verbose")
+			if err != nil {
+				return err
+			}
+
+			config.Verbose = v
 
 			cancelCtx, cancel := context.WithCancel(ctx)
 
@@ -75,19 +70,15 @@ func newForwardCommand() *cobra.Command {
 				cancel()
 			}()
 
-			return command.Run(cancelCtx, client, config, cmdArgs, streams)
+			return command.Run(cancelCtx, client, config, cmdArgs, args[0], args[1:], streams)
 		},
 	}
 
-	flags.AddFlagSet(cmd.PersistentFlags())
-	kubeConfigFlags.AddFlags(flags)
-	kubeResouceBuilderFlags.AddFlags(flags)
-
-	cmdutil.AddPodRunningTimeoutFlag(cmd, 500)
-	cmd.Flags().StringSliceVar(&client.Opts.Address, "address", []string{"localhost"}, "Addresses to listen on (comma separated). Only accepts IP addresses or localhost as a value. When localhost is supplied, kubectl will try to bind on both 127.0.0.1 and ::1 and will fail if neither of these addresses are available to bind.")
-
 	cmd.Flags().StringArray("arg", []string{}, "key=value arguments to be passed to commands")
 	cmd.Flags().Bool("verbose", false, "Whether to write command outputs to console")
+	cmd.Flags().Duration("pod-timeout", 500, "Time to wait for an attachable pod to become available")
+
+	clientcmd.BindOverrideFlags(&overrides, cmd.PersistentFlags(), clientcmd.RecommendedConfigOverrideFlags(""))
 
 	return cmd
 }
