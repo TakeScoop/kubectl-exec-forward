@@ -14,7 +14,7 @@ import (
 	"k8s.io/kubectl/pkg/util"
 )
 
-// Translates the port mappings which are for the runtime object into ports that target the passed pod.
+// Translates the passed runtime object port mappings into ports that target the passed pod.
 func (c Client) translatePorts(obj runtime.Object, pod *corev1.Pod, ports []string) ([]string, error) {
 	switch t := obj.(type) {
 	case *corev1.Service:
