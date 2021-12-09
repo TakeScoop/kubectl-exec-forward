@@ -19,7 +19,7 @@ import (
 func newForwardCommand() *cobra.Command {
 	overrides := clientcmd.ConfigOverrides{}
 
-	kubeConfigFlags := genericclioptions.NewConfigFlags(true).WithDeprecatedPasswordFlag()
+	kubeConfigFlags := genericclioptions.NewConfigFlags(false)
 
 	streams := &genericclioptions.IOStreams{
 		Out:    os.Stdout,
