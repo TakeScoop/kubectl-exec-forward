@@ -30,16 +30,16 @@ func Run(ctx context.Context, client *forwarder.Client, config *Config, cliArgs 
 		return err
 	}
 
-	stopChan := make(chan struct{})
-	readyChan := make(chan struct{})
-	fwdErrChan := make(chan error)
-	hookErrChan := make(chan error)
-
 	outputs := map[string]Output{}
 
 	if err := hooks.Pre.execute(ctx, config, args, outputs, streams); err != nil {
 		return err
 	}
+
+	hookErrChan := make(chan error)
+	fwdErrChan := make(chan error)
+	stopChan := make(chan struct{})
+	readyChan := make(chan struct{})
 
 	cancelCtx, cancel := context.WithCancel(ctx)
 
