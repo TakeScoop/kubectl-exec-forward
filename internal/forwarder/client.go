@@ -43,19 +43,19 @@ func (c *Client) Init(overrides clientcmd.ConfigOverrides) error {
 
 	c.userConfig = kc
 
-	config, err := kc.ClientConfig()
+	rc, err := kc.ClientConfig()
 	if err != nil {
 		return err
 	}
 
-	c.restConfig = config
+	c.restConfig = rc
 
-	clientset, err := kubernetes.NewForConfig(config)
+	cs, err := kubernetes.NewForConfig(rc)
 	if err != nil {
 		return err
 	}
 
-	c.clientset = clientset
+	c.clientset = cs
 
 	return nil
 }
