@@ -1,5 +1,5 @@
 /*
-Many of the functions here are borrowed from kubernetes/kubectl repo. They are private and cannot be used directly.
+Package forwarder contains a few functions that are borrowed from kubernetes/kubectl repo. They are private and cannot be used directly.
 https://github.com/kubernetes/kubectl/blob/0b0920722212395d20fd0eecb5abf45ecb3e0cac/pkg/cmd/portforward/portforward.go
 */
 package forwarder
@@ -25,7 +25,7 @@ func (c Client) translatePorts(obj runtime.Object, pod *corev1.Pod, ports []stri
 }
 
 // splitPort splits port string which is in form of [LOCAL PORT]:REMOTE PORT
-// and returns local and remote ports separately
+// and returns local and remote ports separately.
 func splitPort(port string) (local, remote string) {
 	parts := strings.Split(port, ":")
 	if len(parts) == 2 {
@@ -80,7 +80,7 @@ func translateServicePortToTargetPort(ports []string, svc corev1.Service, pod co
 }
 
 // convertPodNamedPortToNumber converts named ports into port numbers
-// It returns an error when a named port can't be found in the pod containers
+// It returns an error when a named port can't be found in the pod containers.
 func convertPodNamedPortToNumber(ports []string, pod corev1.Pod) ([]string, error) {
 	var converted []string
 
