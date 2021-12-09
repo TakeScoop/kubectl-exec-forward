@@ -17,6 +17,5 @@ linters:
     - maligned
     - stylecheck
     - varnamelen
-    - ireturn
 issues:
   exclude-use-default: false

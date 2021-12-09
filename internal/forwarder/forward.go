@@ -6,6 +6,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/tools/portforward"
 	"k8s.io/client-go/transport/spdy"
+	"k8s.io/kubectl/pkg/scheme"
 )
 
 // ForwardConfig contains the information required to satisfy a call to Forward.
@@ -22,7 +23,14 @@ func (c Client) NewForwardConfig(resource string, portMap []string) (*ForwardCon
 		return nil, err
 	}
 
-	obj, err := c.getResource(namespace, resource)
+	obj, err := c.factory.NewBuilder().
+		WithScheme(scheme.Scheme, scheme.Scheme.PrioritizedVersionsAllGroups()...).
+		ContinueOnError().
+		NamespaceParam(namespace).
+		DefaultNamespace().
+		ResourceNames("pods", resource).
+		Do().
+		Object()
 	if err != nil {
 		return nil, err
 	}
