@@ -35,15 +35,6 @@ func newForwardCommand() *cobra.Command {
 			ctx := cmd.Context()
 			flags := cmd.Flags()
 
-			namespace, err := flags.GetString("namespace")
-			if err != nil {
-				return err
-			}
-
-			if namespace == "" {
-				namespace = "default"
-			}
-
 			podTimeout, err := flags.GetDuration("pod-timeout")
 			if err != nil {
 				return err
@@ -56,14 +47,6 @@ func newForwardCommand() *cobra.Command {
 
 			sigChan := make(chan os.Signal, 1)
 			signal.Notify(sigChan, os.Interrupt)
-
-			cancelCtx, cancel := context.WithCancel(ctx)
-
-			go func() {
-				<-sigChan
-
-				cancel()
-			}()
 
 			cmdArgs, err := parseArgFlag(cmd)
 			if err != nil {
@@ -79,7 +62,15 @@ func newForwardCommand() *cobra.Command {
 
 			config.Verbose = v
 
-			return command.Run(cancelCtx, client, config, cmdArgs, namespace, args[0], args[1:], streams)
+			cancelCtx, cancel := context.WithCancel(ctx)
+
+			go func() {
+				<-sigChan
+
+				cancel()
+			}()
+
+			return command.Run(cancelCtx, client, config, cmdArgs, args[0], args[1:], streams)
 		},
 	}
 

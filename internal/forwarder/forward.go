@@ -16,7 +16,12 @@ type ForwardConfig struct {
 }
 
 // NewForwardConfig interacts with the Kubernetes API to find a pod and ports suitable for forwarding.
-func (c Client) NewForwardConfig(namespace string, resource string, portMap []string) (*ForwardConfig, error) {
+func (c Client) NewForwardConfig(resource string, portMap []string) (*ForwardConfig, error) {
+	namespace, _, err := c.userConfig.Namespace()
+	if err != nil {
+		return nil, err
+	}
+
 	obj, err := c.getResource(namespace, resource)
 	if err != nil {
 		return nil, err

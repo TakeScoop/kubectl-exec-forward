@@ -14,8 +14,8 @@ const (
 )
 
 // Run executes hooks found on the passed resource's annotations and opens a forwarding connection to the resource.
-func Run(ctx context.Context, client *forwarder.Client, config *Config, cliArgs map[string]string, namespace string, resource string, portMap []string, streams *genericclioptions.IOStreams) error {
-	fwdConfig, err := client.NewForwardConfig(namespace, resource, portMap)
+func Run(ctx context.Context, client *forwarder.Client, config *Config, cliArgs map[string]string, resource string, portMap []string, streams *genericclioptions.IOStreams) error {
+	fwdConfig, err := client.NewForwardConfig(resource, portMap)
 	if err != nil {
 		return err
 	}

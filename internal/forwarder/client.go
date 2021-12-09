@@ -14,6 +14,7 @@ import (
 type Client struct {
 	clientset  *kubernetes.Clientset
 	restConfig *rest.Config
+	userConfig clientcmd.ClientConfig
 	factory    cmdutil.Factory
 	timeout    time.Duration
 	streams    *genericclioptions.IOStreams
@@ -24,11 +25,12 @@ func NewClient(getter *cmdutil.MatchVersionFlags, timeout time.Duration, streams
 	factory := cmdutil.NewFactory(getter)
 
 	return &Client{
-		clientset:  nil,
-		restConfig: nil,
 		factory:    factory,
 		timeout:    timeout,
 		streams:    streams,
+		clientset:  nil,
+		restConfig: nil,
+		userConfig: nil,
 	}
 }
 
@@ -38,6 +40,8 @@ func (c *Client) Init(overrides clientcmd.ConfigOverrides) error {
 		clientcmd.NewDefaultClientConfigLoadingRules(),
 		&overrides,
 	)
+
+	c.userConfig = kc
 
 	config, err := kc.ClientConfig()
 	if err != nil {
