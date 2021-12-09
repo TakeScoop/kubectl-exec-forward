@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/takescoop/kubectl-port-forward-hooks/internal/command"
 	"github.com/takescoop/kubectl-port-forward-hooks/internal/forwarder"
-	"github.com/takescoop/kubectl-port-forward-hooks/internal/hooks"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/tools/clientcmd"
 	cmdutil "k8s.io/kubectl/pkg/cmd/util"
@@ -64,7 +64,7 @@ func newForwardCommand(streams *genericclioptions.IOStreams) *cobra.Command {
 				return err
 			}
 
-			config := &hooks.Config{}
+			config := &command.Config{}
 
 			v, err := flags.GetBool("verbose")
 			if err != nil {
@@ -73,7 +73,7 @@ func newForwardCommand(streams *genericclioptions.IOStreams) *cobra.Command {
 
 			config.Verbose = v
 
-			return hooks.Run(cancelCtx, client, config, cmdArgs, namespace, args[0], args[1:], streams)
+			return command.Run(cancelCtx, client, config, cmdArgs, namespace, args[0], args[1:], streams)
 		},
 	}
 
