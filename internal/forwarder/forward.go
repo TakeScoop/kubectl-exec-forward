@@ -11,9 +11,8 @@ import (
 
 // ForwardConfig contains the information required to satisfy a call to Forward.
 type ForwardConfig struct {
-	Pod       *corev1.Pod
-	Namespace string
-	Ports     []string
+	Pod   *corev1.Pod
+	Ports []string
 }
 
 // NewForwardConfig interacts with the Kubernetes API to find a pod and ports suitable for forwarding.
@@ -46,9 +45,8 @@ func (c Client) NewForwardConfig(resource string, portMap []string) (*ForwardCon
 	}
 
 	return &ForwardConfig{
-		Pod:       pod,
-		Ports:     ports,
-		Namespace: namespace,
+		Pod:   pod,
+		Ports: ports,
 	}, nil
 }
 
@@ -63,7 +61,7 @@ func (c Client) Forward(config *ForwardConfig, readyChan chan struct{}, stopChan
 		Post().
 		Prefix("api/v1").
 		Resource("pods").
-		Namespace(config.Namespace).
+		Namespace(config.Pod.Namespace).
 		Name(config.Pod.Name).
 		SubResource("portforward").
 		URL()
