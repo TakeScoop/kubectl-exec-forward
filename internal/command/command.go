@@ -3,8 +3,11 @@ package command
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"io"
 	"os/exec"
+	"strings"
+	"text/template"
 
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
@@ -16,25 +19,71 @@ type Command struct {
 	Interactive bool     `json:"interactive"`
 }
 
+type CommandOptions struct {
+	Config *Config
+	Args   *Args
+}
+
 // toCmd returns a golang cmd object from the calling command.
-func (c Command) toCmd(ctx context.Context) *exec.Cmd {
+func (c Command) toCmd(ctx context.Context, commandOpts *CommandOptions) (*exec.Cmd, error) {
 	name := c.Command[0]
-	args := []string{}
+	rawCmdArgs := []string{}
+
+	opts, err := commandOpts.toInterface()
+	if err != nil {
+		return nil, err
+	}
 
 	if len(c.Command) > 1 {
-		args = append(args, c.Command[1:]...)
+		rawCmdArgs = append(rawCmdArgs, c.Command[1:]...)
+	}
+
+	cmdArgs := make([]string, len(rawCmdArgs))
+
+	for i, a := range rawCmdArgs {
+		tpl := template.Must(template.New(c.ID).Funcs(template.FuncMap{
+			"trim": strings.TrimSpace,
+		}).Parse(a))
+
+		o := new(bytes.Buffer)
+
+		if err := tpl.Execute(o, opts); err != nil {
+			return nil, err
+		}
+
+		cmdArgs[i] = o.String()
 	}
 
 	// nolint:gosec
-	return exec.CommandContext(ctx, name, args...)
+	return exec.CommandContext(ctx, name, cmdArgs...), nil
+}
+
+// toInterface takes a CommandOptions object and returns a generic interface map for usage within a tempate execution
+func (co CommandOptions) toInterface() (map[string]interface{}, error) {
+	input := map[string]interface{}{}
+
+	c, err := json.Marshal(co.Config)
+	if err != nil {
+		return nil, err
+	}
+
+	i := map[string]interface{}{}
+	if err := json.Unmarshal(c, &i); err != nil {
+		return nil, err
+	}
+
+	input["Config"] = i
+	input["Args"] = co.Args
+
+	return input, nil
 }
 
 // execute runs the command with the given config and outputs.
-// nolint:unparam
-func (c Command) execute(ctx context.Context, config *Config, arguments *Args, outputs map[string]Output, streams *genericclioptions.IOStreams) (Output, error) {
-	// nolint:godox
-	// TODO: Add in go templating to pair the args and config with the passed commands
-	cmd := c.toCmd(ctx)
+func (c Command) execute(ctx context.Context, opts *CommandOptions, outputs map[string]Output, streams *genericclioptions.IOStreams) (Output, error) {
+	cmd, err := c.toCmd(ctx, opts)
+	if err != nil {
+		return Output{}, err
+	}
 
 	bout := new(bytes.Buffer)
 	berr := new(bytes.Buffer)
@@ -42,7 +91,7 @@ func (c Command) execute(ctx context.Context, config *Config, arguments *Args, o
 	ows := []io.Writer{bout}
 	ews := []io.Writer{berr}
 
-	if c.Interactive || config.Verbose {
+	if c.Interactive || opts.Config.Verbose {
 		ows = append(ows, streams.Out)
 		ews = append(ews, streams.ErrOut)
 	}
@@ -51,7 +100,9 @@ func (c Command) execute(ctx context.Context, config *Config, arguments *Args, o
 	cmd.Stderr = io.MultiWriter(ews...)
 	cmd.Stdin = streams.In
 
-	err := cmd.Run()
+	if err := cmd.Run(); err != nil {
+		return Output{}, err
+	}
 
 	return Output{
 		Stdout: bout.String(),
