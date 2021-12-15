@@ -181,12 +181,16 @@ func TestForward(t *testing.T) {
 
 	go func() {
 		fmt.Println("starting watch on /tmp from goroutine")
-		errChan <- watcher.Watch("/tmp")
+		err := watcher.Watch("/tmp")
+		fmt.Println("watcher error", err)
+		errChan <- err
 	}()
 
 	go func() {
 		fmt.Println("Starting wait for file go routine")
 		err := waitForFile(watcher, doneFile, 10*time.Second)
+
+		fmt.Println("wait for fileerror", err)
 
 		if err != nil {
 			log.Println("ERROR WAITING FOR FILE", err)
