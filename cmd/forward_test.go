@@ -70,6 +70,7 @@ func waitForPod(ctx context.Context, clientset *kubernetes.Clientset, pod *corev
 }
 
 func waitForFile(watcher *fsnotify.Watcher, fileName string, timeout time.Duration) error {
+	fmt.Println("waiting for done file")
 	for {
 		timer := time.NewTimer(timeout)
 
@@ -141,8 +142,6 @@ func TestForward(t *testing.T) {
 	}, metav1.CreateOptions{})
 	assert.NoError(t, err)
 
-	log.Println(pod)
-
 	log.Println("before wait")
 	assert.NoError(t, waitForPod(ctx, clientset, pod))
 	log.Println("after wait")
@@ -174,21 +173,24 @@ func TestForward(t *testing.T) {
 	cancelCtx, cancel := context.WithCancel(ctx)
 
 	go func() {
+		fmt.Println("starting cmd from goroutine")
 		errChan <- cmd.ExecuteContext(cancelCtx)
 	}()
 
 	go func() {
+		fmt.Println("starting watch on /tmp from goroutine")
 		errChan <- watcher.Watch("/tmp")
 	}()
 
 	go func() {
+		fmt.Println("Starting wait for file go routine")
 		err := waitForFile(watcher, doneFile, 10*time.Second)
 
 		if err != nil {
 			log.Println("ERROR WAITING FOR FILE", err)
 			errChan <- err
 		} else {
-			log.Println("DONE waiting for file", err)
+			log.Println("DONE waiting for file")
 			doneChan <- true
 		}
 	}()
