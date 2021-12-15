@@ -173,34 +173,33 @@ func TestForward(t *testing.T) {
 	cancelCtx, cancel := context.WithCancel(ctx)
 
 	go func() {
-		fmt.Println("starting cmd from goroutine")
+		fmt.Println("Starting command")
 		err := cmd.ExecuteContext(cancelCtx)
-		fmt.Println("error running forward command")
+
 		if err != nil {
+			fmt.Println("error executing command")
 			errChan <- err
 		}
 	}()
 
 	go func() {
-		fmt.Println("starting watch on /tmp from goroutine")
+		fmt.Println("Starting watcher on /tmp")
 		err := watcher.Watch("/tmp")
-		fmt.Println("watcher error", err)
+
 		if err != nil {
+			fmt.Println("error watching temp")
 			errChan <- err
 		}
 	}()
 
 	go func() {
-		fmt.Println("Starting wait for file go routine")
+		fmt.Println("Starting wait for file")
 		err := waitForFile(watcher, doneFile, 10*time.Second)
 
-		fmt.Println("wait for fileerror", err)
-
 		if err != nil {
-			log.Println("ERROR WAITING FOR FILE", err)
+			fmt.Println("error waiting for file")
 			errChan <- err
 		} else {
-			log.Println("DONE waiting for file")
 			doneChan <- true
 		}
 	}()
