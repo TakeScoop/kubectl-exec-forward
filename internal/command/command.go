@@ -36,9 +36,12 @@ func (c Command) toCmd(ctx context.Context, config *Config, cmdArgs *Args, outpu
 	args := make([]string, len(rawArgs))
 
 	for i, a := range rawArgs {
-		tpl := template.Must(template.New(c.ID).Option("missingkey=error").Funcs(template.FuncMap{
+		tpl, err := template.New(c.ID).Option("missingkey=error").Funcs(template.FuncMap{
 			"trim": strings.TrimSpace,
-		}).Parse(a))
+		}).Parse(a)
+		if err != nil {
+			return nil, err
+		}
 
 		o := new(bytes.Buffer)
 
