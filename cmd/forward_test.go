@@ -176,14 +176,18 @@ func TestForward(t *testing.T) {
 		fmt.Println("starting cmd from goroutine")
 		err := cmd.ExecuteContext(cancelCtx)
 		fmt.Println("error running forward command")
-		errChan <- err
+		if err != nil {
+			errChan <- err
+		}
 	}()
 
 	go func() {
 		fmt.Println("starting watch on /tmp from goroutine")
 		err := watcher.Watch("/tmp")
 		fmt.Println("watcher error", err)
-		errChan <- err
+		if err != nil {
+			errChan <- err
+		}
 	}()
 
 	go func() {
