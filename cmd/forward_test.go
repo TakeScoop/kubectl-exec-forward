@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"log"
+	"net/http"
 	"strings"
 	"testing"
 	"time"
@@ -53,10 +55,13 @@ func waitForPod(ctx context.Context, clientset *kubernetes.Clientset, pod *corev
 
 		switch pod.Status.Phase {
 		case corev1.PodRunning:
+			log.Println("pod running, pod unknown")
 			return true, nil
 		case corev1.PodPending, corev1.PodUnknown:
+			log.Println("pod pending, pod unknown")
 			return false, nil
 		case corev1.PodFailed, corev1.PodSucceeded:
+			log.Println("pod failed, pod succeeded")
 			return false, fmt.Errorf("pod not running, has status %s", pod.Status.Phase)
 		}
 
@@ -70,6 +75,7 @@ func waitForFile(watcher *fsnotify.Watcher, fileName string, timeout time.Durati
 
 		select {
 		case ev := <-watcher.Event:
+			fmt.Println("event:", ev)
 			if ev.IsCreate() && ev.Name == fileName {
 				return nil
 			}
@@ -106,6 +112,7 @@ func TestForward(t *testing.T) {
 	assert.NoError(t, err)
 
 	defer func() {
+		log.Println("CLEANUP")
 		assert.NoError(t, clientset.CoreV1().Namespaces().Delete(ctx, ns.Name, metav1.DeleteOptions{}))
 	}()
 
@@ -134,7 +141,11 @@ func TestForward(t *testing.T) {
 	}, metav1.CreateOptions{})
 	assert.NoError(t, err)
 
+	log.Println(pod)
+
+	log.Println("before wait")
 	assert.NoError(t, waitForPod(ctx, clientset, pod))
+	log.Println("after wait")
 
 	out := new(bytes.Buffer)
 	outErr := new(bytes.Buffer)
@@ -174,8 +185,10 @@ func TestForward(t *testing.T) {
 		err := waitForFile(watcher, doneFile, 10*time.Second)
 
 		if err != nil {
+			log.Println("ERROR WAITING FOR FILE", err)
 			errChan <- err
 		} else {
+			log.Println("DONE waiting for file", err)
 			doneChan <- true
 		}
 	}()
@@ -184,24 +197,26 @@ waitForFinish:
 	for {
 		select {
 		case <-doneChan:
+			log.Println("done heard")
 			break waitForFinish
 		case err := <-errChan:
+			log.Println("error heard")
 			assert.NoError(t, err)
 
 			break waitForFinish
 		}
 	}
 
-	// req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("http://localhost:%d", localPort), nil)
-	// assert.NoError(t, err)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("http://localhost:%d", localPort), nil)
+	assert.NoError(t, err)
 
-	// httpClient := &http.Client{}
-	// resp, err := httpClient.Do(req)
+	httpClient := &http.Client{}
+	resp, err := httpClient.Do(req)
 
-	// assert.NoError(t, err)
-	// assert.NoError(t, resp.Body.Close())
+	assert.NoError(t, err)
+	assert.NoError(t, resp.Body.Close())
 
-	// assert.Equal(t, 200, resp.StatusCode)
+	assert.Equal(t, 200, resp.StatusCode)
 
 	cancel()
 	assert.NoError(t, watcher.Close())
