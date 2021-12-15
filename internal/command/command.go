@@ -3,7 +3,6 @@ package command
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"io"
 	"os/exec"
 	"strings"
@@ -20,62 +19,53 @@ type Command struct {
 }
 
 type commandOptions struct {
-	config *Config
-	args   *Args
+	config  *Config
+	args    *Args
+	outputs map[string]Output
 }
 
 // toCmd returns a golang cmd object from the calling command.
 func (c Command) toCmd(ctx context.Context, commandOpts *commandOptions) (*exec.Cmd, error) {
 	name := c.Command[0]
-	rawCmdArgs := []string{}
-
-	opts, err := commandOpts.toInterface()
-	if err != nil {
-		return nil, err
-	}
+	rawArgs := []string{}
 
 	if len(c.Command) > 1 {
-		rawCmdArgs = append(rawCmdArgs, c.Command[1:]...)
+		rawArgs = append(rawArgs, c.Command[1:]...)
 	}
 
-	cmdArgs := make([]string, len(rawCmdArgs))
+	args := make([]string, len(rawArgs))
 
-	for i, a := range rawCmdArgs {
-		tpl := template.Must(template.New(c.ID).Funcs(template.FuncMap{
+	for i, a := range rawArgs {
+		tpl := template.Must(template.New(c.ID).Option("missingkey=error").Funcs(template.FuncMap{
 			"trim": strings.TrimSpace,
 		}).Parse(a))
 
 		o := new(bytes.Buffer)
 
-		if err := tpl.Execute(o, opts); err != nil {
+		if err := tpl.Execute(o, commandOpts.toInterface()); err != nil {
 			return nil, err
 		}
 
-		cmdArgs[i] = o.String()
+		args[i] = o.String()
 	}
 
 	// nolint:gosec
-	return exec.CommandContext(ctx, name, cmdArgs...), nil
+	return exec.CommandContext(ctx, name, args...), nil
 }
 
 // toInterface takes a CommandOptions object and returns a generic interface map for usage within a tempate execution.
-func (co commandOptions) toInterface() (map[string]interface{}, error) {
+func (co commandOptions) toInterface() map[string]interface{} {
 	input := map[string]interface{}{}
 
-	c, err := json.Marshal(co.config)
-	if err != nil {
-		return nil, err
-	}
-
-	i := map[string]interface{}{}
-	if err := json.Unmarshal(c, &i); err != nil {
-		return nil, err
-	}
-
-	input["Config"] = i
+	input["Config"] = co.config
 	input["Args"] = co.args
+	input["Outputs"] = map[string]Output{}
 
-	return input, nil
+	for k, v := range co.outputs {
+		input["Outputs"].(map[string]Output)[k] = v
+	}
+
+	return input
 }
 
 // execute runs the command with the given config and outputs.
