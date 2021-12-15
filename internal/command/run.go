@@ -32,9 +32,9 @@ func Run(ctx context.Context, client *forwarder.Client, config *Config, cliArgs 
 
 	outputs := map[string]Output{}
 
-	commandOptions := &CommandOptions{
-		Config: config,
-		Args:   args,
+	commandOptions := &commandOptions{
+		config: config,
+		args:   args,
 	}
 
 	if err := hooks.Pre.execute(ctx, commandOptions, outputs, streams); err != nil {

@@ -19,13 +19,13 @@ type Command struct {
 	Interactive bool     `json:"interactive"`
 }
 
-type CommandOptions struct {
-	Config *Config
-	Args   *Args
+type commandOptions struct {
+	config *Config
+	args   *Args
 }
 
 // toCmd returns a golang cmd object from the calling command.
-func (c Command) toCmd(ctx context.Context, commandOpts *CommandOptions) (*exec.Cmd, error) {
+func (c Command) toCmd(ctx context.Context, commandOpts *commandOptions) (*exec.Cmd, error) {
 	name := c.Command[0]
 	rawCmdArgs := []string{}
 
@@ -58,11 +58,11 @@ func (c Command) toCmd(ctx context.Context, commandOpts *CommandOptions) (*exec.
 	return exec.CommandContext(ctx, name, cmdArgs...), nil
 }
 
-// toInterface takes a CommandOptions object and returns a generic interface map for usage within a tempate execution
-func (co CommandOptions) toInterface() (map[string]interface{}, error) {
+// toInterface takes a CommandOptions object and returns a generic interface map for usage within a tempate execution.
+func (co commandOptions) toInterface() (map[string]interface{}, error) {
 	input := map[string]interface{}{}
 
-	c, err := json.Marshal(co.Config)
+	c, err := json.Marshal(co.config)
 	if err != nil {
 		return nil, err
 	}
@@ -73,13 +73,13 @@ func (co CommandOptions) toInterface() (map[string]interface{}, error) {
 	}
 
 	input["Config"] = i
-	input["Args"] = co.Args
+	input["Args"] = co.args
 
 	return input, nil
 }
 
 // execute runs the command with the given config and outputs.
-func (c Command) execute(ctx context.Context, opts *CommandOptions, outputs map[string]Output, streams *genericclioptions.IOStreams) (Output, error) {
+func (c Command) execute(ctx context.Context, opts *commandOptions, streams *genericclioptions.IOStreams) (Output, error) {
 	cmd, err := c.toCmd(ctx, opts)
 	if err != nil {
 		return Output{}, err
@@ -91,7 +91,7 @@ func (c Command) execute(ctx context.Context, opts *CommandOptions, outputs map[
 	ows := []io.Writer{bout}
 	ews := []io.Writer{berr}
 
-	if c.Interactive || opts.Config.Verbose {
+	if c.Interactive || opts.config.Verbose {
 		ows = append(ows, streams.Out)
 		ews = append(ews, streams.ErrOut)
 	}

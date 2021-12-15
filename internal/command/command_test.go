@@ -16,7 +16,7 @@ func TestToCmd(t *testing.T) {
 			Command: []string{"echo"},
 		}
 
-		cmd, err := c.toCmd(ctx, &CommandOptions{})
+		cmd, err := c.toCmd(ctx, &commandOptions{})
 		assert.NoError(t, err)
 
 		assert.Equal(t, []string{"echo"}, cmd.Args)
@@ -30,7 +30,7 @@ func TestToCmd(t *testing.T) {
 			Command: []string{"echo", "hello", "world"},
 		}
 
-		cmd, err := c.toCmd(ctx, &CommandOptions{})
+		cmd, err := c.toCmd(ctx, &commandOptions{})
 		assert.NoError(t, err)
 
 		assert.Equal(t, []string{"echo", "hello", "world"}, cmd.Args)
@@ -44,8 +44,8 @@ func TestToCmd(t *testing.T) {
 			Command: []string{"echo", "{{.Config.LocalPort}}"},
 		}
 
-		cmd, err := c.toCmd(ctx, &CommandOptions{
-			Config: &Config{
+		cmd, err := c.toCmd(ctx, &commandOptions{
+			config: &Config{
 				LocalPort: 5678,
 			},
 		})
@@ -62,8 +62,8 @@ func TestToCmd(t *testing.T) {
 			Command: []string{"echo", "{{.Args.foo}}"},
 		}
 
-		cmd, err := c.toCmd(ctx, &CommandOptions{
-			Args: &Args{
+		cmd, err := c.toCmd(ctx, &commandOptions{
+			args: &Args{
 				"foo": "bar",
 			},
 		})
@@ -80,11 +80,11 @@ func TestToCmd(t *testing.T) {
 			Command: []string{"echo", "{{.Args.foo}}", "{{.Config.Verbose}}"},
 		}
 
-		cmd, err := c.toCmd(ctx, &CommandOptions{
-			Config: &Config{
+		cmd, err := c.toCmd(ctx, &commandOptions{
+			config: &Config{
 				Verbose: false,
 			},
-			Args: &Args{
+			args: &Args{
 				"foo": "bar",
 			},
 		})
