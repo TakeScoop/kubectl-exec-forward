@@ -5,6 +5,8 @@ import (
 	"context"
 	"io"
 	"os/exec"
+	"strings"
+	"text/template"
 
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
@@ -16,25 +18,54 @@ type Command struct {
 	Interactive bool     `json:"interactive"`
 }
 
+type templateInputs struct {
+	Config  *Config
+	Args    *Args
+	Outputs map[string]Output
+}
+
 // toCmd returns a golang cmd object from the calling command.
-func (c Command) toCmd(ctx context.Context) *exec.Cmd {
+func (c Command) toCmd(ctx context.Context, config *Config, cmdArgs *Args, outputs map[string]Output) (*exec.Cmd, error) {
 	name := c.Command[0]
-	args := []string{}
+	rawArgs := []string{}
 
 	if len(c.Command) > 1 {
-		args = append(args, c.Command[1:]...)
+		rawArgs = append(rawArgs, c.Command[1:]...)
+	}
+
+	args := make([]string, len(rawArgs))
+
+	for i, a := range rawArgs {
+		tpl, err := template.New(c.ID).Option("missingkey=error").Funcs(template.FuncMap{
+			"trim": strings.TrimSpace,
+		}).Parse(a)
+		if err != nil {
+			return nil, err
+		}
+
+		o := new(bytes.Buffer)
+
+		if err := tpl.Execute(o, &templateInputs{
+			Config:  config,
+			Args:    cmdArgs,
+			Outputs: outputs,
+		}); err != nil {
+			return nil, err
+		}
+
+		args[i] = o.String()
 	}
 
 	// nolint:gosec
-	return exec.CommandContext(ctx, name, args...)
+	return exec.CommandContext(ctx, name, args...), nil
 }
 
 // execute runs the command with the given config and outputs.
-// nolint:unparam
-func (c Command) execute(ctx context.Context, config *Config, arguments *Args, outputs map[string]Output, streams *genericclioptions.IOStreams) (Output, error) {
-	// nolint:godox
-	// TODO: Add in go templating to pair the args and config with the passed commands
-	cmd := c.toCmd(ctx)
+func (c Command) execute(ctx context.Context, config *Config, args *Args, outputs map[string]Output, streams *genericclioptions.IOStreams) (Output, error) {
+	cmd, err := c.toCmd(ctx, config, args, outputs)
+	if err != nil {
+		return Output{}, err
+	}
 
 	bout := new(bytes.Buffer)
 	berr := new(bytes.Buffer)
@@ -51,7 +82,9 @@ func (c Command) execute(ctx context.Context, config *Config, arguments *Args, o
 	cmd.Stderr = io.MultiWriter(ews...)
 	cmd.Stdin = streams.In
 
-	err := cmd.Run()
+	if err := cmd.Run(); err != nil {
+		return Output{}, err
+	}
 
 	return Output{
 		Stdout: bout.String(),
