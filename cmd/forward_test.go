@@ -174,7 +174,9 @@ func TestForward(t *testing.T) {
 
 	go func() {
 		fmt.Println("starting cmd from goroutine")
-		errChan <- cmd.ExecuteContext(cancelCtx)
+		err := cmd.ExecuteContext(cancelCtx)
+		fmt.Println("error running forward command")
+		errChan <- err
 	}()
 
 	go func() {
