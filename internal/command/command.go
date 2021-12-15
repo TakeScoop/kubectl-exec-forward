@@ -18,14 +18,14 @@ type Command struct {
 	Interactive bool     `json:"interactive"`
 }
 
-type commandOptions struct {
-	config  *Config
-	args    *Args
-	outputs map[string]Output
+type templateInputs struct {
+	Config  *Config
+	Args    *Args
+	Outputs map[string]Output
 }
 
 // toCmd returns a golang cmd object from the calling command.
-func (c Command) toCmd(ctx context.Context, commandOpts *commandOptions) (*exec.Cmd, error) {
+func (c Command) toCmd(ctx context.Context, config *Config, cmdArgs *Args, outputs map[string]Output) (*exec.Cmd, error) {
 	name := c.Command[0]
 	rawArgs := []string{}
 
@@ -42,7 +42,11 @@ func (c Command) toCmd(ctx context.Context, commandOpts *commandOptions) (*exec.
 
 		o := new(bytes.Buffer)
 
-		if err := tpl.Execute(o, commandOpts.toInterface()); err != nil {
+		if err := tpl.Execute(o, &templateInputs{
+			Config:  config,
+			Args:    cmdArgs,
+			Outputs: outputs,
+		}); err != nil {
 			return nil, err
 		}
 
@@ -53,24 +57,9 @@ func (c Command) toCmd(ctx context.Context, commandOpts *commandOptions) (*exec.
 	return exec.CommandContext(ctx, name, args...), nil
 }
 
-// toInterface takes a CommandOptions object and returns a generic interface map for usage within a tempate execution.
-func (co commandOptions) toInterface() map[string]interface{} {
-	input := map[string]interface{}{}
-
-	input["Config"] = co.config
-	input["Args"] = co.args
-	input["Outputs"] = map[string]Output{}
-
-	for k, v := range co.outputs {
-		input["Outputs"].(map[string]Output)[k] = v
-	}
-
-	return input
-}
-
 // execute runs the command with the given config and outputs.
-func (c Command) execute(ctx context.Context, opts *commandOptions, streams *genericclioptions.IOStreams) (Output, error) {
-	cmd, err := c.toCmd(ctx, opts)
+func (c Command) execute(ctx context.Context, config *Config, args *Args, outputs map[string]Output, streams *genericclioptions.IOStreams) (Output, error) {
+	cmd, err := c.toCmd(ctx, config, args, outputs)
 	if err != nil {
 		return Output{}, err
 	}
@@ -81,7 +70,7 @@ func (c Command) execute(ctx context.Context, opts *commandOptions, streams *gen
 	ows := []io.Writer{bout}
 	ews := []io.Writer{berr}
 
-	if c.Interactive || opts.config.Verbose {
+	if c.Interactive || config.Verbose {
 		ows = append(ows, streams.Out)
 		ews = append(ews, streams.ErrOut)
 	}

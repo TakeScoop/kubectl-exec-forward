@@ -11,19 +11,24 @@ import (
 type Commands []*Command
 
 // execute runs each command in the calling slice sequentially using the passed config and the outputs accumulated to that point.
-func (c Commands) execute(ctx context.Context, opts *commandOptions, streams *genericclioptions.IOStreams) error {
+func (c Commands) execute(ctx context.Context, config *Config, args *Args, previousOutputs map[string]Output, streams *genericclioptions.IOStreams) (map[string]Output, error) {
+	outputs := map[string]Output{}
+	for k, v := range previousOutputs {
+		outputs[k] = v
+	}
+
 	for _, command := range c {
-		output, err := command.execute(ctx, opts, streams)
+		output, err := command.execute(ctx, config, args, outputs, streams)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		if command.ID != "" {
-			opts.outputs[command.ID] = output
+			outputs[command.ID] = output
 		}
 	}
 
-	return nil
+	return outputs, nil
 }
 
 // parseCommands returns a slice of commands parsed from an annotations map at the value "key".

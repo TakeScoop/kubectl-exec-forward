@@ -14,7 +14,7 @@ func TestToCmd(t *testing.T) {
 			Command: []string{"echo"},
 		}
 
-		cmd, err := c.toCmd(context.Background(), &commandOptions{})
+		cmd, err := c.toCmd(context.Background(), &Config{}, &Args{}, map[string]Output{})
 		assert.NoError(t, err)
 
 		assert.Equal(t, []string{"echo"}, cmd.Args)
@@ -26,7 +26,7 @@ func TestToCmd(t *testing.T) {
 			Command: []string{"echo", "hello", "world"},
 		}
 
-		cmd, err := c.toCmd(context.Background(), &commandOptions{})
+		cmd, err := c.toCmd(context.Background(), &Config{}, &Args{}, map[string]Output{})
 		assert.NoError(t, err)
 
 		assert.Equal(t, []string{"echo", "hello", "world"}, cmd.Args)
@@ -38,12 +38,10 @@ func TestToCmd(t *testing.T) {
 			Command: []string{"echo", "{{.Config.LocalPort}}", "{{.Config.Verbose}}"},
 		}
 
-		cmd, err := c.toCmd(context.Background(), &commandOptions{
-			config: &Config{
-				LocalPort: 5678,
-				Verbose:   true,
-			},
-		})
+		cmd, err := c.toCmd(context.Background(), &Config{
+			LocalPort: 5678,
+			Verbose:   true,
+		}, &Args{}, map[string]Output{})
 		assert.NoError(t, err)
 
 		assert.Equal(t, []string{"echo", "5678", "true"}, cmd.Args)
@@ -55,11 +53,7 @@ func TestToCmd(t *testing.T) {
 			Command: []string{"echo", "{{.Args.foo}}"},
 		}
 
-		cmd, err := c.toCmd(context.Background(), &commandOptions{
-			args: &Args{
-				"foo": "bar",
-			},
-		})
+		cmd, err := c.toCmd(context.Background(), &Config{}, &Args{"foo": "bar"}, map[string]Output{})
 		assert.NoError(t, err)
 
 		assert.Equal(t, []string{"echo", "bar"}, cmd.Args)
@@ -71,12 +65,10 @@ func TestToCmd(t *testing.T) {
 			Command: []string{"echo", "{{.Outputs.foo.Stdout}}"},
 		}
 
-		cmd, err := c.toCmd(context.Background(), &commandOptions{
-			outputs: map[string]Output{
-				"foo": {
-					Stdout: "hello world",
-					Stderr: "",
-				},
+		cmd, err := c.toCmd(context.Background(), &Config{}, &Args{}, map[string]Output{
+			"foo": {
+				Stdout: "hello world",
+				Stderr: "",
 			},
 		})
 		assert.NoError(t, err)
@@ -90,7 +82,7 @@ func TestToCmd(t *testing.T) {
 			Command: []string{"echo", "{{.DoesNotExist}}"},
 		}
 
-		_, err := c.toCmd(context.Background(), &commandOptions{})
+		_, err := c.toCmd(context.Background(), &Config{}, &Args{}, map[string]Output{})
 		assert.Error(t, err)
 	})
 
@@ -99,7 +91,7 @@ func TestToCmd(t *testing.T) {
 			Command: []string{"echo", "foo"},
 		}
 
-		cmd, err := c.toCmd(context.Background(), &commandOptions{})
+		cmd, err := c.toCmd(context.Background(), &Config{}, &Args{}, map[string]Output{})
 		assert.NoError(t, err)
 
 		assert.Equal(t, []string{"echo", "foo"}, cmd.Args)

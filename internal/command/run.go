@@ -30,13 +30,9 @@ func Run(ctx context.Context, client *forwarder.Client, config *Config, cliArgs 
 		return err
 	}
 
-	commandOptions := &commandOptions{
-		config:  config,
-		args:    args,
-		outputs: map[string]Output{},
-	}
+	outputs := map[string]Output{}
 
-	if err := hooks.Pre.execute(ctx, commandOptions, streams); err != nil {
+	if outputs, err = hooks.Pre.execute(ctx, config, args, outputs, streams); err != nil {
 		return err
 	}
 
@@ -50,7 +46,7 @@ func Run(ctx context.Context, client *forwarder.Client, config *Config, cliArgs 
 	go func() {
 		<-readyChan
 
-		if err := hooks.Post.execute(cancelCtx, commandOptions, streams); err != nil {
+		if _, err = hooks.Post.execute(cancelCtx, config, args, outputs, streams); err != nil {
 			hookErrChan <- err
 		}
 	}()
