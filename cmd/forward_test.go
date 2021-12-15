@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"net/http"
 	"strings"
 	"testing"
 	"time"
@@ -193,16 +192,16 @@ waitForFinish:
 		}
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("http://localhost:%d", localPort), nil)
-	assert.NoError(t, err)
+	// req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("http://localhost:%d", localPort), nil)
+	// assert.NoError(t, err)
 
-	httpClient := &http.Client{}
-	resp, err := httpClient.Do(req)
+	// httpClient := &http.Client{}
+	// resp, err := httpClient.Do(req)
 
-	assert.NoError(t, err)
-	assert.NoError(t, resp.Body.Close())
+	// assert.NoError(t, err)
+	// assert.NoError(t, resp.Body.Close())
 
-	assert.Equal(t, 200, resp.StatusCode)
+	// assert.Equal(t, 200, resp.StatusCode)
 
 	cancel()
 	assert.NoError(t, watcher.Close())
