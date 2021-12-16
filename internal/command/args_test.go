@@ -42,4 +42,17 @@ func TestParseArgs(t *testing.T) {
 
 		assert.Equal(t, &expected, args)
 	})
+
+	t.Run("Add overrides with no args annotation", func(t *testing.T) {
+		args, err := parseArgs(map[string]string{}, map[string]string{
+			"username": "bar",
+		})
+		assert.NoError(t, err)
+
+		expected := Args{
+			"username": "bar",
+		}
+
+		assert.Equal(t, &expected, args)
+	})
 }
