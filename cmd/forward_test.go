@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
@@ -186,7 +185,7 @@ func TestRunForwardCommand(t *testing.T) {
 	}()
 
 	go func() {
-		err := watcher.Watch(doneDir)
+		err := watcher.Watch(doneFile.Name())
 		if err != nil {
 			errChan <- err
 		}
