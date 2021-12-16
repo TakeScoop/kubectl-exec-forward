@@ -77,7 +77,7 @@ func waitForFile(watcher *fsnotify.Watcher, fileName string, timeout time.Durati
 		case err := <-watcher.Error:
 			return err
 		case <-timer.C:
-			return fmt.Errorf("timed out waiting for finish file to be written: %s", fileName)
+			return fmt.Errorf("timed out waiting for done file to be written: %s", fileName)
 		}
 
 		timer.Stop()
@@ -85,6 +85,8 @@ func waitForFile(watcher *fsnotify.Watcher, fileName string, timeout time.Durati
 }
 
 func getKubernetesClientset(t *testing.T) *kubernetes.Clientset {
+	t.Helper()
+
 	kc := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 		clientcmd.NewDefaultClientConfigLoadingRules(),
 		&clientcmd.ConfigOverrides{},
@@ -117,7 +119,7 @@ func TestRunForwardCommand(t *testing.T) {
 	}()
 
 	doneDir := "/tmp"
-	doneFile := fmt.Sprintf("%s/test-%d", doneDir, timestamp)
+	doneFile := fmt.Sprintf("%s/test-done-%d", doneDir, timestamp)
 
 	pod, err := clientset.CoreV1().Pods(ns.Name).Create(ctx, &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
