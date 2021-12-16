@@ -46,62 +46,6 @@ func TestParseArgs(t *testing.T) {
 	})
 }
 
-func waitForPod(ctx context.Context, t *testing.T, clientset *kubernetes.Clientset, pod *corev1.Pod) {
-	t.Helper()
-
-	assert.NoError(t, wait.PollImmediate(time.Second, time.Minute, func() (bool, error) {
-		pod, err := clientset.CoreV1().Pods(pod.Namespace).Get(ctx, pod.Name, metav1.GetOptions{})
-		if err != nil {
-			return false, err
-		}
-
-		switch pod.Status.Phase {
-		case corev1.PodRunning:
-			return true, nil
-		case corev1.PodPending, corev1.PodUnknown:
-			return false, nil
-		case corev1.PodFailed, corev1.PodSucceeded:
-			return false, fmt.Errorf("pod not running, has status %s", pod.Status.Phase)
-		}
-
-		return false, nil
-	}))
-}
-
-func waitForFile(watcher *fsnotify.Watcher, fileName string, timeout time.Duration) error {
-	timer := time.NewTimer(timeout)
-	defer timer.Stop()
-
-	for {
-		select {
-		case ev := <-watcher.Event:
-			if ev.Name == fileName {
-				return nil
-			}
-		case err := <-watcher.Error:
-			return err
-		case <-timer.C:
-			return fmt.Errorf("timed out waiting for done file to be written: %s", fileName)
-		}
-	}
-}
-
-func getKubernetesClientset(t *testing.T) *kubernetes.Clientset {
-	t.Helper()
-
-	kc := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
-		clientcmd.NewDefaultClientConfigLoadingRules(),
-		&clientcmd.ConfigOverrides{},
-	)
-	rc, err := kc.ClientConfig()
-	assert.NoError(t, err)
-
-	clientset, err := kubernetes.NewForConfig(rc)
-	assert.NoError(t, err)
-
-	return clientset
-}
-
 func TestRunForwardCommand(t *testing.T) {
 	if testing.Short() {
 		t.Skip()
@@ -203,17 +147,7 @@ func TestRunForwardCommand(t *testing.T) {
 		}
 	}()
 
-waitForFinish:
-	for {
-		select {
-		case <-doneChan:
-			break waitForFinish
-		case err := <-errChan:
-			assert.NoError(t, err)
-
-			break waitForFinish
-		}
-	}
+	waitForFinish(t, doneChan, errChan)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("http://localhost:%d", localPort), nil)
 	assert.NoError(t, err)
@@ -228,4 +162,74 @@ waitForFinish:
 
 	assert.True(t, strings.HasPrefix(out.String(), "test"), "stdout did not contain hook command output")
 	assert.True(t, strings.HasPrefix(outErr.String(), ""), "stderr was not empty")
+}
+
+func waitForFinish(t *testing.T, doneChan chan bool, errChan chan error) {
+	t.Helper()
+
+	for {
+		select {
+		case <-doneChan:
+			return
+		case err := <-errChan:
+			assert.NoError(t, err)
+
+			return
+		}
+	}
+}
+func waitForPod(ctx context.Context, t *testing.T, clientset *kubernetes.Clientset, pod *corev1.Pod) {
+	t.Helper()
+
+	assert.NoError(t, wait.PollImmediate(time.Second, time.Minute, func() (bool, error) {
+		pod, err := clientset.CoreV1().Pods(pod.Namespace).Get(ctx, pod.Name, metav1.GetOptions{})
+		if err != nil {
+			return false, err
+		}
+
+		switch pod.Status.Phase {
+		case corev1.PodRunning:
+			return true, nil
+		case corev1.PodPending, corev1.PodUnknown:
+			return false, nil
+		case corev1.PodFailed, corev1.PodSucceeded:
+			return false, fmt.Errorf("pod not running, has status %s", pod.Status.Phase)
+		}
+
+		return false, nil
+	}))
+}
+
+func waitForFile(watcher *fsnotify.Watcher, fileName string, timeout time.Duration) error {
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
+
+	for {
+		select {
+		case ev := <-watcher.Event:
+			if ev.Name == fileName {
+				return nil
+			}
+		case err := <-watcher.Error:
+			return err
+		case <-timer.C:
+			return fmt.Errorf("timed out waiting for done file to be written: %s", fileName)
+		}
+	}
+}
+
+func getKubernetesClientset(t *testing.T) *kubernetes.Clientset {
+	t.Helper()
+
+	kc := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+		clientcmd.NewDefaultClientConfigLoadingRules(),
+		&clientcmd.ConfigOverrides{},
+	)
+	rc, err := kc.ClientConfig()
+	assert.NoError(t, err)
+
+	clientset, err := kubernetes.NewForConfig(rc)
+	assert.NoError(t, err)
+
+	return clientset
 }
