@@ -176,6 +176,7 @@ func TestRunForwardCommand(t *testing.T) {
 	})
 
 	cancelCtx, cancel := context.WithCancel(ctx)
+
 	t.Cleanup(func() {
 		cancel()
 	})
