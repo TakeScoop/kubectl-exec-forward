@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -73,7 +75,7 @@ func waitForFile(watcher *fsnotify.Watcher, fileName string, timeout time.Durati
 
 		select {
 		case ev := <-watcher.Event:
-			if ev.IsCreate() && ev.Name == fileName {
+			if ev.Name == fileName {
 				return nil
 			}
 		case err := <-watcher.Error:
@@ -111,24 +113,29 @@ func TestRunForwardCommand(t *testing.T) {
 
 	clientset := getKubernetesClientset(t)
 
-	timestamp := time.Now().Unix()
-
-	ns, err := clientset.CoreV1().Namespaces().Create(ctx, &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("test-%d", timestamp)}}, metav1.CreateOptions{})
+	ns, err := clientset.CoreV1().Namespaces().Create(ctx, &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{GenerateName: "test"}}, metav1.CreateOptions{})
 	assert.NoError(t, err)
 
 	defer func() {
 		assert.NoError(t, clientset.CoreV1().Namespaces().Delete(ctx, ns.Name, metav1.DeleteOptions{}))
 	}()
 
-	doneDir := "/tmp"
-	doneFile := fmt.Sprintf("%s/test-done-%d", doneDir, timestamp)
+	doneDir, err := os.MkdirTemp("", "test")
+	assert.NoError(t, err)
+
+	defer func() {
+		assert.NoError(t, os.RemoveAll(doneDir))
+	}()
+
+	doneFile, err := ioutil.TempFile(doneDir, "test")
+	assert.NoError(t, err)
 
 	pod, err := clientset.CoreV1().Pods(ns.Name).Create(ctx, &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test",
 			Annotations: map[string]string{
 				command.PreAnnotation:  `[{"command": ["echo", "test"]}]`,
-				command.PostAnnotation: fmt.Sprintf(`[{"command": ["touch", %q]}]`, doneFile),
+				command.PostAnnotation: fmt.Sprintf(`[{"command": ["touch", %q]}]`, doneFile.Name()),
 			},
 		},
 		Spec: corev1.PodSpec{
@@ -188,7 +195,7 @@ func TestRunForwardCommand(t *testing.T) {
 	}()
 
 	go func() {
-		err := waitForFile(watcher, doneFile, 10*time.Second)
+		err := waitForFile(watcher, doneFile.Name(), 10*time.Second)
 
 		if err != nil {
 			errChan <- err
