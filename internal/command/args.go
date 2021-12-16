@@ -9,7 +9,7 @@ type Args map[string]string
 
 // parseArgs parses key value pairs from the passed annotations map, adds any overrides passed and returns a new args map.
 func parseArgs(annotations map[string]string, overrides map[string]string) (args *Args, err error) {
-	v, ok := annotations[argsAnnotation]
+	v, ok := annotations[ArgsAnnotation]
 	if !ok {
 		return args, err
 	}

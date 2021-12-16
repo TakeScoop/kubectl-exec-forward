@@ -8,12 +8,12 @@ type Hooks struct {
 
 // newHooks returns a new Hooks struct assembled from the passed annotations.
 func newHooks(annotations map[string]string) (*Hooks, error) {
-	pre, err := parseCommands(annotations, preAnnotation)
+	pre, err := parseCommands(annotations, PreAnnotation)
 	if err != nil {
 		return nil, err
 	}
 
-	post, err := parseCommands(annotations, postAnnotation)
+	post, err := parseCommands(annotations, PostAnnotation)
 	if err != nil {
 		return nil, err
 	}

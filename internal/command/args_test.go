@@ -9,8 +9,8 @@ import (
 func TestParseArgs(t *testing.T) {
 	t.Run("Parse basic args", func(t *testing.T) {
 		annotations := map[string]string{
-			preAnnotation:  `{}`,
-			argsAnnotation: `{"username":"foo","schema":"https"}`,
+			PreAnnotation:  `{}`,
+			ArgsAnnotation: `{"username":"foo","schema":"https"}`,
 		}
 
 		args, err := parseArgs(annotations, map[string]string{})
@@ -26,8 +26,8 @@ func TestParseArgs(t *testing.T) {
 
 	t.Run("Parse with overrides", func(t *testing.T) {
 		annotations := map[string]string{
-			preAnnotation:  `{}`,
-			argsAnnotation: `{"username":"foo","schema":"https"}`,
+			PreAnnotation:  `{}`,
+			ArgsAnnotation: `{"username":"foo","schema":"https"}`,
 		}
 
 		args, err := parseArgs(annotations, map[string]string{
