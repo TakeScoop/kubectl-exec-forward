@@ -71,6 +71,7 @@ func waitForPod(ctx context.Context, t *testing.T, clientset *kubernetes.Clients
 func waitForFile(watcher *fsnotify.Watcher, fileName string, timeout time.Duration) error {
 	for {
 		timer := time.NewTimer(timeout)
+		defer timer.Stop()
 
 		select {
 		case ev := <-watcher.Event:
@@ -82,8 +83,6 @@ func waitForFile(watcher *fsnotify.Watcher, fileName string, timeout time.Durati
 		case <-timer.C:
 			return fmt.Errorf("timed out waiting for done file to be written: %s", fileName)
 		}
-
-		timer.Stop()
 	}
 }
 
