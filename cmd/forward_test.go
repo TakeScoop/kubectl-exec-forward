@@ -45,8 +45,10 @@ func TestParseArgs(t *testing.T) {
 	})
 }
 
-func waitForPod(ctx context.Context, clientset *kubernetes.Clientset, pod *corev1.Pod) error {
-	return wait.PollImmediate(time.Second, time.Minute, func() (bool, error) {
+func waitForPod(ctx context.Context, t *testing.T, clientset *kubernetes.Clientset, pod *corev1.Pod) {
+	t.Helper()
+
+	assert.NoError(t, wait.PollImmediate(time.Second, time.Minute, func() (bool, error) {
 		pod, err := clientset.CoreV1().Pods(pod.Namespace).Get(ctx, pod.Name, metav1.GetOptions{})
 		if err != nil {
 			return false, err
@@ -62,7 +64,7 @@ func waitForPod(ctx context.Context, clientset *kubernetes.Clientset, pod *corev
 		}
 
 		return false, nil
-	})
+	}))
 }
 
 func waitForFile(watcher *fsnotify.Watcher, fileName string, timeout time.Duration) error {
@@ -143,7 +145,7 @@ func TestRunForwardCommand(t *testing.T) {
 	}, metav1.CreateOptions{})
 	assert.NoError(t, err)
 
-	assert.NoError(t, waitForPod(ctx, clientset, pod))
+	waitForPod(ctx, t, clientset, pod)
 
 	out := new(bytes.Buffer)
 	outErr := new(bytes.Buffer)
