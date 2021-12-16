@@ -84,13 +84,7 @@ func waitForFile(watcher *fsnotify.Watcher, fileName string, timeout time.Durati
 	}
 }
 
-func TestForward(t *testing.T) {
-	if testing.Short() {
-		t.Skip()
-	}
-
-	ctx := context.Background()
-
+func getKubernetesClientset(t *testing.T) *kubernetes.Clientset {
 	kc := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 		clientcmd.NewDefaultClientConfigLoadingRules(),
 		&clientcmd.ConfigOverrides{},
@@ -101,6 +95,18 @@ func TestForward(t *testing.T) {
 	clientset, err := kubernetes.NewForConfig(rc)
 	assert.NoError(t, err)
 
+	return clientset
+}
+
+func TestRunForwardCommand(t *testing.T) {
+	if testing.Short() {
+		t.Skip()
+	}
+
+	ctx := context.Background()
+
+	clientset := getKubernetesClientset(t)
+
 	timestamp := time.Now().Unix()
 
 	ns, err := clientset.CoreV1().Namespaces().Create(ctx, &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("test-%d", timestamp)}}, metav1.CreateOptions{})
@@ -110,7 +116,8 @@ func TestForward(t *testing.T) {
 		assert.NoError(t, clientset.CoreV1().Namespaces().Delete(ctx, ns.Name, metav1.DeleteOptions{}))
 	}()
 
-	doneFile := fmt.Sprintf("/tmp/test-%d", timestamp)
+	doneDir := "/tmp"
+	doneFile := fmt.Sprintf("%s/test-%d", doneDir, timestamp)
 
 	pod, err := clientset.CoreV1().Pods(ns.Name).Create(ctx, &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
@@ -126,7 +133,6 @@ func TestForward(t *testing.T) {
 					Image: "nginx",
 					Name:  "nginx",
 					Ports: []corev1.ContainerPort{{
-						Name:          "http",
 						ContainerPort: 80,
 					}},
 				},
@@ -171,7 +177,7 @@ func TestForward(t *testing.T) {
 	}()
 
 	go func() {
-		err := watcher.Watch("/tmp")
+		err := watcher.Watch(doneDir)
 		if err != nil {
 			errChan <- err
 		}
