@@ -178,7 +178,12 @@ func TestRunForwardCommand(t *testing.T) {
 	watcher, err := fsnotify.NewWatcher()
 	assert.NoError(t, err)
 
+	defer func() {
+		assert.NoError(t, watcher.Close())
+	}()
+
 	cancelCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
 	go func() {
 		err := cmd.ExecuteContext(cancelCtx)
@@ -226,9 +231,6 @@ waitForFinish:
 	assert.NoError(t, resp.Body.Close())
 
 	assert.Equal(t, 200, resp.StatusCode)
-
-	cancel()
-	assert.NoError(t, watcher.Close())
 
 	assert.True(t, strings.HasPrefix(out.String(), "test"))
 	assert.True(t, strings.HasPrefix(outErr.String(), ""))
