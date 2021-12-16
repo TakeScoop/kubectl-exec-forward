@@ -69,10 +69,10 @@ func waitForPod(ctx context.Context, t *testing.T, clientset *kubernetes.Clients
 }
 
 func waitForFile(watcher *fsnotify.Watcher, fileName string, timeout time.Duration) error {
-	for {
-		timer := time.NewTimer(timeout)
-		defer timer.Stop()
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
 
+	for {
 		select {
 		case ev := <-watcher.Event:
 			if ev.Name == fileName {
