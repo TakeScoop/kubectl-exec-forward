@@ -115,9 +115,9 @@ func TestRunForwardCommand(t *testing.T) {
 	ns, err := clientset.CoreV1().Namespaces().Create(ctx, &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{GenerateName: "test"}}, metav1.CreateOptions{})
 	assert.NoError(t, err)
 
-	defer func() {
+	t.Cleanup(func() {
 		assert.NoError(t, clientset.CoreV1().Namespaces().Delete(ctx, ns.Name, metav1.DeleteOptions{}))
-	}()
+	})
 
 	doneDir, err := os.MkdirTemp("", "test")
 	assert.NoError(t, err)
@@ -172,12 +172,14 @@ func TestRunForwardCommand(t *testing.T) {
 	watcher, err := fsnotify.NewWatcher()
 	assert.NoError(t, err)
 
-	defer func() {
+	t.Cleanup(func() {
 		assert.NoError(t, watcher.Close())
-	}()
+	})
 
 	cancelCtx, cancel := context.WithCancel(ctx)
-	defer cancel()
+	t.Cleanup(func() {
+		cancel()
+	})
 
 	go func() {
 		if err := cmd.ExecuteContext(cancelCtx); err != nil {
