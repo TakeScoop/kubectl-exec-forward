@@ -178,6 +178,7 @@ func waitForFinish(t *testing.T, doneChan chan bool, errChan chan error) {
 		}
 	}
 }
+
 func waitForPod(ctx context.Context, t *testing.T, clientset *kubernetes.Clientset, pod *corev1.Pod) {
 	t.Helper()
 
