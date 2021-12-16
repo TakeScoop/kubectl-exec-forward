@@ -119,15 +119,17 @@ func TestRunForwardCommand(t *testing.T) {
 		assert.NoError(t, clientset.CoreV1().Namespaces().Delete(ctx, ns.Name, metav1.DeleteOptions{}))
 	}()
 
-	doneFile, err := os.CreateTemp(os.TempDir(), "test")
+	doneDir, err := os.MkdirTemp("", "test")
 	assert.NoError(t, err)
+
+	doneFile := fmt.Sprintf("%s/test", doneDir)
 
 	pod, err := clientset.CoreV1().Pods(ns.Name).Create(ctx, &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test",
 			Annotations: map[string]string{
 				command.PreAnnotation:  `[{"command": ["echo", "test"]}]`,
-				command.PostAnnotation: fmt.Sprintf(`[{"command": ["touch", %q]}]`, doneFile.Name()),
+				command.PostAnnotation: fmt.Sprintf(`[{"command": ["touch", %q]}]`, doneFile),
 			},
 		},
 		Spec: corev1.PodSpec{
@@ -178,21 +180,19 @@ func TestRunForwardCommand(t *testing.T) {
 	defer cancel()
 
 	go func() {
-		err := cmd.ExecuteContext(cancelCtx)
-		if err != nil {
+		if err := cmd.ExecuteContext(cancelCtx); err != nil {
 			errChan <- err
 		}
 	}()
 
 	go func() {
-		err := watcher.Watch(doneFile.Name())
-		if err != nil {
+		if err := watcher.Watch(doneDir); err != nil {
 			errChan <- err
 		}
 	}()
 
 	go func() {
-		err := waitForFile(watcher, doneFile.Name(), 10*time.Second)
+		err := waitForFile(watcher, doneFile, 10*time.Second)
 
 		if err != nil {
 			errChan <- err
