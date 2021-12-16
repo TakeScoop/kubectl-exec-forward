@@ -226,6 +226,6 @@ waitForFinish:
 
 	assert.Equal(t, 200, resp.StatusCode)
 
-	assert.True(t, strings.HasPrefix(out.String(), "test"))
-	assert.True(t, strings.HasPrefix(outErr.String(), ""))
+	assert.True(t, strings.HasPrefix(out.String(), "test"), "stdout did not contain hook command output")
+	assert.True(t, strings.HasPrefix(outErr.String(), ""), "stderr was not empty")
 }
