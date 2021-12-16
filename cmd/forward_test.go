@@ -120,14 +120,7 @@ func TestRunForwardCommand(t *testing.T) {
 		assert.NoError(t, clientset.CoreV1().Namespaces().Delete(ctx, ns.Name, metav1.DeleteOptions{}))
 	}()
 
-	doneDir, err := os.MkdirTemp("", "test")
-	assert.NoError(t, err)
-
-	defer func() {
-		assert.NoError(t, os.RemoveAll(doneDir))
-	}()
-
-	doneFile, err := ioutil.TempFile(doneDir, "test")
+	doneFile, err := os.CreateTemp(os.TempDir(), "test")
 	assert.NoError(t, err)
 
 	pod, err := clientset.CoreV1().Pods(ns.Name).Create(ctx, &corev1.Pod{
