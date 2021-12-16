@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 	"testing"
@@ -55,13 +54,10 @@ func waitForPod(ctx context.Context, clientset *kubernetes.Clientset, pod *corev
 
 		switch pod.Status.Phase {
 		case corev1.PodRunning:
-			log.Println("pod running, pod unknown")
 			return true, nil
 		case corev1.PodPending, corev1.PodUnknown:
-			log.Println("pod pending, pod unknown")
 			return false, nil
 		case corev1.PodFailed, corev1.PodSucceeded:
-			log.Println("pod failed, pod succeeded")
 			return false, fmt.Errorf("pod not running, has status %s", pod.Status.Phase)
 		}
 
@@ -70,13 +66,11 @@ func waitForPod(ctx context.Context, clientset *kubernetes.Clientset, pod *corev
 }
 
 func waitForFile(watcher *fsnotify.Watcher, fileName string, timeout time.Duration) error {
-	fmt.Println("waiting for done file")
 	for {
 		timer := time.NewTimer(timeout)
 
 		select {
 		case ev := <-watcher.Event:
-			fmt.Println("event:", ev)
 			if ev.IsCreate() && ev.Name == fileName {
 				return nil
 			}
@@ -113,7 +107,6 @@ func TestForward(t *testing.T) {
 	assert.NoError(t, err)
 
 	defer func() {
-		log.Println("CLEANUP")
 		assert.NoError(t, clientset.CoreV1().Namespaces().Delete(ctx, ns.Name, metav1.DeleteOptions{}))
 	}()
 
@@ -142,9 +135,7 @@ func TestForward(t *testing.T) {
 	}, metav1.CreateOptions{})
 	assert.NoError(t, err)
 
-	log.Println("before wait")
 	assert.NoError(t, waitForPod(ctx, clientset, pod))
-	log.Println("after wait")
 
 	out := new(bytes.Buffer)
 	outErr := new(bytes.Buffer)
@@ -173,31 +164,23 @@ func TestForward(t *testing.T) {
 	cancelCtx, cancel := context.WithCancel(ctx)
 
 	go func() {
-		fmt.Println("Starting command")
 		err := cmd.ExecuteContext(cancelCtx)
-
 		if err != nil {
-			fmt.Println("error executing command")
 			errChan <- err
 		}
 	}()
 
 	go func() {
-		fmt.Println("Starting watcher on /tmp")
 		err := watcher.Watch("/tmp")
-
 		if err != nil {
-			fmt.Println("error watching temp")
 			errChan <- err
 		}
 	}()
 
 	go func() {
-		fmt.Println("Starting wait for file")
 		err := waitForFile(watcher, doneFile, 10*time.Second)
 
 		if err != nil {
-			fmt.Println("error waiting for file")
 			errChan <- err
 		} else {
 			doneChan <- true
@@ -208,10 +191,8 @@ waitForFinish:
 	for {
 		select {
 		case <-doneChan:
-			log.Println("done heard")
 			break waitForFinish
 		case err := <-errChan:
-			log.Println("error heard")
 			assert.NoError(t, err)
 
 			break waitForFinish
