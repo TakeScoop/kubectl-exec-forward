@@ -17,7 +17,7 @@ const (
 )
 
 // Run executes hooks found on the passed resource's underlying pod annotations and opens a forwarding connection to the resource.
-func Run(ctx context.Context, client *forwarder.Client, config *Config, cliArgs map[string]string, resource string, portMap []string, streams *genericclioptions.IOStreams) error {
+func Run(ctx context.Context, client *forwarder.Client, hooksConfig *Config, cliArgs map[string]string, resource string, portMap []string, streams *genericclioptions.IOStreams) error {
 	fwdConfig, err := client.NewConfig(resource, portMap)
 	if err != nil {
 		return err
@@ -28,7 +28,7 @@ func Run(ctx context.Context, client *forwarder.Client, config *Config, cliArgs 
 		return err
 	}
 
-	config.LocalPorts = localPorts
+	hooksConfig.LocalPorts = localPorts
 
 	args, err := parseArgs(fwdConfig.Pod.Annotations, cliArgs)
 	if err != nil {
@@ -42,7 +42,7 @@ func Run(ctx context.Context, client *forwarder.Client, config *Config, cliArgs 
 
 	outputs := map[string]Output{}
 
-	if outputs, err = hooks.Pre.execute(ctx, config, args, outputs, streams); err != nil {
+	if outputs, err = hooks.Pre.execute(ctx, hooksConfig, args, outputs, streams); err != nil {
 		return err
 	}
 
@@ -56,7 +56,7 @@ func Run(ctx context.Context, client *forwarder.Client, config *Config, cliArgs 
 	go func() {
 		<-readyChan
 
-		if _, err = hooks.Post.execute(cancelCtx, config, args, outputs, streams); err != nil {
+		if _, err = hooks.Post.execute(cancelCtx, hooksConfig, args, outputs, streams); err != nil {
 			hookErrChan <- err
 		}
 	}()
