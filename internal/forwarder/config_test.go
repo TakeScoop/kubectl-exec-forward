@@ -39,5 +39,4 @@ func TestGetLocalPorts(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, []int{8080, 4040}, actual)
 	})
-
 }

@@ -13,7 +13,7 @@ type Config struct {
 	Ports []string
 }
 
-// GetLocalPorts returns the local ports from the Config port mapping
+// GetLocalPorts returns the local ports from the Config port mapping.
 func (c Config) GetLocalPorts() (ports []int, err error) {
 	for _, p := range c.Ports {
 		localStr, _ := splitPort(p)
