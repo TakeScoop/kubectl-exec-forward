@@ -34,8 +34,8 @@ func newForwardCommand(streams *genericclioptions.IOStreams) *cobra.Command {
 				return err
 			}
 
-			fwd := forwarder.NewClient(cmdutil.NewMatchVersionFlags(kubeConfigFlags), podTimeout, streams)
-			if err := fwd.Init(overrides); err != nil {
+			client := forwarder.NewClient(cmdutil.NewMatchVersionFlags(kubeConfigFlags), podTimeout, streams)
+			if err := client.Init(overrides); err != nil {
 				return err
 			}
 
@@ -64,7 +64,7 @@ func newForwardCommand(streams *genericclioptions.IOStreams) *cobra.Command {
 				cancel()
 			}()
 
-			return command.Run(cancelCtx, fwd, config, cmdArgs, args[0], args[1:], streams)
+			return command.Run(cancelCtx, client, config, cmdArgs, args[0], args[1:], streams)
 		},
 	}
 
