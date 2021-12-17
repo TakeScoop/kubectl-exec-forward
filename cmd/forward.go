@@ -106,8 +106,9 @@ func Execute() {
 	cobra.CheckErr(cmd.Execute())
 }
 
-func parseCommandFlag(flags *pflag.FlagSet, commandType string) (command.Commands, error) {
-	raw, err := flags.GetStringArray(commandType)
+// parseCommandFlag reads the passed flag name and send the result over to parseCommands for parsing.
+func parseCommandFlag(flags *pflag.FlagSet, name string) (command.Commands, error) {
+	raw, err := flags.GetStringArray(name)
 	if err != nil {
 		return nil, err
 	}
@@ -115,10 +116,11 @@ func parseCommandFlag(flags *pflag.FlagSet, commandType string) (command.Command
 	return parseCommands(raw)
 }
 
+// parseCommands takes a list of key=value commands and returns a parsed list of commands.
 func parseCommands(kvs []string) (command.Commands, error) {
-	commands := command.Commands{}
+	commands := make(command.Commands, len(kvs))
 
-	for _, s := range kvs {
+	for i, s := range kvs {
 		parsed := strings.Split(s, "=")
 
 		var id string
@@ -132,10 +134,10 @@ func parseCommands(kvs []string) (command.Commands, error) {
 			cmdStr = parsed[1]
 		}
 
-		commands = append(commands, &command.Command{
+		commands[i] = &command.Command{
 			ID:      id,
 			Command: strings.Split(cmdStr, ","),
-		})
+		}
 	}
 
 	return commands, nil
