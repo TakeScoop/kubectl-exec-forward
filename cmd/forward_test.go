@@ -46,6 +46,23 @@ func TestParseArgs(t *testing.T) {
 	})
 }
 
+func TestParseCommandFlag(t *testing.T) {
+	t.Run("parse basic argument inputs into commands", func(t *testing.T) {
+		commands, err := parseCommands([]string{"foo=echo,hello,world"})
+		assert.NoError(t, err)
+
+		assert.Equal(t, command.Commands{{ID: "foo", Command: []string{"echo", "hello", "world"}}}, commands)
+	})
+
+	t.Run("use generated ID when no ID is supplied", func(t *testing.T) {
+		commands, err := parseCommands([]string{"echo,hello,world"})
+		assert.NoError(t, err)
+
+		assert.Equal(t, []string{"echo", "hello", "world"}, commands[0].Command)
+		assert.NotEqual(t, "", commands[0].ID)
+	})
+}
+
 func TestRunForwardCommand(t *testing.T) {
 	if testing.Short() {
 		t.Skip()

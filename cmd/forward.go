@@ -6,8 +6,10 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/takescoop/kubectl-port-forward-hooks/internal/command"
 	"github.com/takescoop/kubectl-port-forward-hooks/internal/forwarder"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
@@ -47,6 +49,21 @@ func newForwardCommand(streams *genericclioptions.IOStreams) *cobra.Command {
 				return err
 			}
 
+			pre, err := parseCommandFlag(flags, "pre-command")
+			if err != nil {
+				return err
+			}
+
+			post, err := parseCommandFlag(flags, "post-command")
+			if err != nil {
+				return err
+			}
+
+			hookOverrides = &command.Hooks{
+				Pre:  pre,
+				Post: post,
+			}
+
 			config := &command.Config{}
 
 			v, err := flags.GetBool("verbose")
@@ -71,6 +88,8 @@ func newForwardCommand(streams *genericclioptions.IOStreams) *cobra.Command {
 	cmd.Flags().StringArray("arg", []string{}, "key=value arguments to be passed to commands")
 	cmd.Flags().Bool("verbose", false, "Whether to write command outputs to console")
 	cmd.Flags().Duration("pod-timeout", 500, "Time to wait for an attachable pod to become available")
+	cmd.Flags().StringArray("pre-command", []string{}, "Pre connection command to add or replace in the format of id=comma,separated,command")
+	cmd.Flags().StringArray("post-command", []string{}, "Post connection command to add or replace in the format of id=comma,separated,command")
 
 	clientcmd.BindOverrideFlags(&overrides, cmd.PersistentFlags(), clientcmd.RecommendedConfigOverrideFlags(""))
 
@@ -86,6 +105,38 @@ func Execute() {
 	})
 
 	cobra.CheckErr(cmd.Execute())
+}
+
+func parseCommandFlag(flags *pflag.FlagSet, commandType string) (command.Commands, error) {
+	raw, err := flags.GetStringArray(commandType)
+	if err != nil {
+		return nil, err
+	}
+	return parseCommands(raw)
+}
+
+func parseCommands(kvs []string) (command.Commands, error) {
+	commands := command.Commands{}
+	for _, s := range kvs {
+		parsed := strings.Split(s, "=")
+
+		var id string
+		var cmdStr string
+
+		if len(parsed) == 1 {
+			id = fmt.Sprintf("%d", time.Now().Unix())
+			cmdStr = parsed[0]
+		} else {
+			id = parsed[0]
+			cmdStr = parsed[1]
+		}
+
+		commands = append(commands, &command.Command{
+			ID:      id,
+			Command: strings.Split(cmdStr, ","),
+		})
+	}
+	return commands, nil
 }
 
 // parseArgFlag parses the passed command line --args into a key value map.
