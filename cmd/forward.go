@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/signal"
 	"strings"
-	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -59,7 +58,7 @@ func newForwardCommand(streams *genericclioptions.IOStreams) *cobra.Command {
 				return err
 			}
 
-			hookOverrides = &command.Hooks{
+			hookOverrides := &command.Hooks{
 				Pre:  pre,
 				Post: post,
 			}
@@ -81,7 +80,7 @@ func newForwardCommand(streams *genericclioptions.IOStreams) *cobra.Command {
 				cancel()
 			}()
 
-			return command.Run(cancelCtx, client, config, cmdArgs, args[0], args[1:], streams)
+			return command.Run(cancelCtx, client, config, cmdArgs, hookOverrides, args[0], args[1:], streams)
 		},
 	}
 
@@ -124,7 +123,6 @@ func parseCommands(kvs []string) (command.Commands, error) {
 		var cmdStr string
 
 		if len(parsed) == 1 {
-			id = fmt.Sprintf("%d", time.Now().Unix())
 			cmdStr = parsed[0]
 		} else {
 			id = parsed[0]

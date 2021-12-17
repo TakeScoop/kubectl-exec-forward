@@ -58,8 +58,7 @@ func TestParseCommandFlag(t *testing.T) {
 		commands, err := parseCommands([]string{"echo,hello,world"})
 		assert.NoError(t, err)
 
-		assert.Equal(t, []string{"echo", "hello", "world"}, commands[0].Command)
-		assert.NotEqual(t, "", commands[0].ID)
+		assert.Equal(t, command.Commands{{ID: "", Command: []string{"echo", "hello", "world"}}}, commands)
 	})
 }
 
