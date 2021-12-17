@@ -17,5 +17,7 @@ linters:
     - maligned
     - stylecheck
     - varnamelen
+    - gocritic
+    - nestif
 issues:
   exclude-use-default: false

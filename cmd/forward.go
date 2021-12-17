@@ -111,15 +111,18 @@ func parseCommandFlag(flags *pflag.FlagSet, commandType string) (command.Command
 	if err != nil {
 		return nil, err
 	}
+
 	return parseCommands(raw)
 }
 
 func parseCommands(kvs []string) (command.Commands, error) {
 	commands := command.Commands{}
+
 	for _, s := range kvs {
 		parsed := strings.Split(s, "=")
 
 		var id string
+
 		var cmdStr string
 
 		if len(parsed) == 1 {
@@ -134,6 +137,7 @@ func parseCommands(kvs []string) (command.Commands, error) {
 			Command: strings.Split(cmdStr, ","),
 		})
 	}
+
 	return commands, nil
 }
 
