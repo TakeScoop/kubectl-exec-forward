@@ -33,6 +33,7 @@ func newHooks(annotations map[string]string, config *Config) (*Hooks, error) {
 		if config != nil && config.CommandOverride != "" {
 			command.Command = append([]string{config.CommandOverride}, command.Command[1:]...)
 		}
+
 		hooks.Command = Commands{command}
 	}
 
