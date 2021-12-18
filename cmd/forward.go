@@ -49,6 +49,13 @@ func newForwardCommand(streams *genericclioptions.IOStreams) *cobra.Command {
 
 			config := &command.Config{}
 
+			commandOverride, err := flags.GetString("command")
+			if err != nil {
+				return err
+			}
+
+			config.CommandOverride = commandOverride
+
 			v, err := flags.GetBool("verbose")
 			if err != nil {
 				return err
@@ -71,6 +78,7 @@ func newForwardCommand(streams *genericclioptions.IOStreams) *cobra.Command {
 	cmd.Flags().StringArray("arg", []string{}, "key=value arguments to be passed to commands")
 	cmd.Flags().Bool("verbose", false, "Whether to write command outputs to console")
 	cmd.Flags().Duration("pod-timeout", 500, "Time to wait for an attachable pod to become available")
+	cmd.Flags().String("command", "", "Override to apply to the main command hook")
 
 	clientcmd.BindOverrideFlags(&overrides, cmd.PersistentFlags(), clientcmd.RecommendedConfigOverrideFlags(""))
 

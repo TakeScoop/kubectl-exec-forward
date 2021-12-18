@@ -2,12 +2,13 @@ package command
 
 // Hooks store information regarding command hooks.
 type Hooks struct {
-	Pre  Commands
-	Post Commands
+	Pre     Commands
+	Post    Commands
+	Command Commands
 }
 
 // newHooks returns a new Hooks struct assembled from the passed annotations.
-func newHooks(annotations map[string]string) (*Hooks, error) {
+func newHooks(annotations map[string]string, config *Config) (*Hooks, error) {
 	pre, err := parseCommands(annotations, PreAnnotation)
 	if err != nil {
 		return nil, err
@@ -18,8 +19,22 @@ func newHooks(annotations map[string]string) (*Hooks, error) {
 		return nil, err
 	}
 
-	return &Hooks{
+	command, err := parseComand(annotations, CommandAnnotation)
+	if err != nil {
+		return nil, err
+	}
+
+	hooks := &Hooks{
 		Pre:  pre,
 		Post: post,
-	}, nil
+	}
+
+	if command != nil {
+		if config != nil && config.CommandOverride != "" {
+			command.Command = append([]string{config.CommandOverride}, command.Command[1:]...)
+		}
+		hooks.Command = Commands{command}
+	}
+
+	return hooks, nil
 }

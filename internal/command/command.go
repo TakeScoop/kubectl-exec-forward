@@ -3,6 +3,7 @@ package command
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"io"
 	"os/exec"
 	"strings"
@@ -90,4 +91,18 @@ func (c Command) execute(ctx context.Context, config *Config, args *Args, output
 		Stdout: bout.String(),
 		Stderr: berr.String(),
 	}, err
+}
+
+// parseCommand returns a Command from an annotation storing a single command in json format.
+func parseComand(annotations map[string]string, key string) (command *Command, err error) {
+	v, ok := annotations[key]
+	if !ok {
+		return command, nil
+	}
+
+	if err := json.Unmarshal([]byte(v), &command); err != nil {
+		return command, err
+	}
+
+	return command, nil
 }
