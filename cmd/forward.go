@@ -22,7 +22,7 @@ func newForwardCommand(streams *genericclioptions.IOStreams) *cobra.Command {
 	kubeConfigFlags := genericclioptions.NewConfigFlags(false)
 
 	cmd := &cobra.Command{
-		Use:   "kubectl port forward hooks TYPE/NAME PORTS [options]",
+		Use:   "kubectl port forward hooks TYPE/NAME PORT [command...] [options]",
 		Short: "Port forward to Kubernetes resources and execute commands found in annotations",
 		Args:  cobra.MinimumNArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -47,14 +47,9 @@ func newForwardCommand(streams *genericclioptions.IOStreams) *cobra.Command {
 				return err
 			}
 
-			config := &command.Config{}
-
-			commandOverride, err := flags.GetString("command")
-			if err != nil {
-				return err
+			config := &command.Config{
+				Command: args[2:],
 			}
-
-			config.CommandOverride = commandOverride
 
 			v, err := flags.GetBool("verbose")
 			if err != nil {
@@ -71,14 +66,13 @@ func newForwardCommand(streams *genericclioptions.IOStreams) *cobra.Command {
 				cancel()
 			}()
 
-			return command.Run(cancelCtx, client, config, cmdArgs, args[0], args[1:], streams)
+			return command.Run(cancelCtx, client, config, cmdArgs, args[0], []string{args[1]}, streams)
 		},
 	}
 
 	cmd.Flags().StringArray("arg", []string{}, "key=value arguments to be passed to commands")
 	cmd.Flags().Bool("verbose", false, "Whether to write command outputs to console")
 	cmd.Flags().Duration("pod-timeout", 500, "Time to wait for an attachable pod to become available")
-	cmd.Flags().String("command", "", "Override to apply to the main command hook")
 
 	clientcmd.BindOverrideFlags(&overrides, cmd.PersistentFlags(), clientcmd.RecommendedConfigOverrideFlags(""))
 

@@ -50,11 +50,11 @@ func TestNewHooks(t *testing.T) {
 	t.Run("replace the command portion of the main command if command-override is supplied", func(t *testing.T) {
 		actual, err := newHooks(map[string]string{
 			CommandAnnotation: `{"command": ["echo", "hello"]}`,
-		}, &Config{CommandOverride: "touch"})
+		}, &Config{Command: []string{"touch", "foo"}})
 		assert.NoError(t, err)
 
 		assert.Equal(t, &Hooks{
-			Command: Commands{{Command: []string{"touch", "hello"}}},
+			Command: Commands{{Command: []string{"touch", "foo", "hello"}}},
 		}, actual)
 	})
 }
