@@ -76,7 +76,6 @@ func translateServicePortToTargetPort(port string, svc corev1.Service, pod corev
 // convertPodNamedPortToNumber converts named ports into port numbers
 // It returns an error when a named port can't be found in the pod containers.
 func convertPodNamedPortToNumber(port string, pod corev1.Pod) (string, error) {
-
 	localPort, remotePort := splitPort(port)
 
 	containerPortStr := remotePort
