@@ -4,7 +4,7 @@ package command
 type Hooks struct {
 	Pre     Commands
 	Post    Commands
-	Command Commands
+	Command Command
 }
 
 // newHooks returns a new Hooks struct assembled from the passed annotations.
@@ -19,23 +19,23 @@ func newHooks(annotations map[string]string, config *Config) (*Hooks, error) {
 		return nil, err
 	}
 
-	command, err := parseComand(annotations, CommandAnnotation)
-	if err != nil {
-		return nil, err
-	}
-
 	hooks := &Hooks{
 		Pre:  pre,
 		Post: post,
 	}
 
-	if command != nil {
-		if config != nil {
-			command.Command = append(config.Command, command.Command[1:]...)
-		}
-
-		hooks.Command = Commands{command}
+	c, err := parseComand(annotations, CommandAnnotation)
+	if err != nil {
+		return nil, err
 	}
+
+	if config != nil {
+		if len(config.Command) > 0 {
+			c.Command = append(config.Command, c.Command[1:]...)
+		}
+	}
+
+	hooks.Command = c
 
 	return hooks, nil
 }

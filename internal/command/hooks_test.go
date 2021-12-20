@@ -43,7 +43,7 @@ func TestNewHooks(t *testing.T) {
 		assert.NoError(t, err)
 
 		assert.Equal(t, &Hooks{
-			Command: Commands{{Command: []string{"echo", "hello"}}},
+			Command: Command{Command: []string{"echo", "hello"}},
 		}, actual)
 	})
 
@@ -54,7 +54,18 @@ func TestNewHooks(t *testing.T) {
 		assert.NoError(t, err)
 
 		assert.Equal(t, &Hooks{
-			Command: Commands{{Command: []string{"touch", "foo", "hello"}}},
+			Command: Command{Command: []string{"touch", "foo", "hello"}},
+		}, actual)
+	})
+
+	t.Run("keep existing command if the override command is empty", func(t *testing.T) {
+		actual, err := newHooks(map[string]string{
+			CommandAnnotation: `{"command": ["echo", "hello"]}`,
+		}, &Config{Command: []string{}})
+		assert.NoError(t, err)
+
+		assert.Equal(t, &Hooks{
+			Command: Command{Command: []string{"echo", "hello"}},
 		}, actual)
 	})
 }
