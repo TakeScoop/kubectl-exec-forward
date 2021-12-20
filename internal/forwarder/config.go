@@ -9,28 +9,24 @@ import (
 
 // Config contains the information required to satisfy a call to Forward.
 type Config struct {
-	Pod   *corev1.Pod
-	Ports []string
+	Pod  *corev1.Pod
+	Port string
 }
 
-// GetLocalPorts returns the local ports from the Config port mapping.
-func (c Config) GetLocalPorts() (ports []int, err error) {
-	for _, p := range c.Ports {
-		localStr, _ := splitPort(p)
+// GetLocalPort returns the local ports from the Config port mapping.
+func (c Config) GetLocalPort() (port int, err error) {
+	localStr, _ := splitPort(c.Port)
 
-		local, err := strconv.ParseInt(localStr, 10, 64)
-		if err != nil {
-			return ports, err
-		}
-
-		ports = append(ports, int(local))
+	local, err := strconv.ParseInt(localStr, 10, 64)
+	if err != nil {
+		return 0, err
 	}
 
-	return ports, nil
+	return int(local), nil
 }
 
 // NewConfig interacts with the Kubernetes API to find a pod and ports suitable for forwarding.
-func (c Client) NewConfig(resource string, portMap []string) (*Config, error) {
+func (c Client) NewConfig(resource string, portMap string) (*Config, error) {
 	namespace, _, err := c.userConfig.Namespace()
 	if err != nil {
 		return nil, err
@@ -53,13 +49,13 @@ func (c Client) NewConfig(resource string, portMap []string) (*Config, error) {
 		return nil, err
 	}
 
-	ports, err := c.translatePorts(obj, pod, portMap)
+	port, err := c.translatePorts(obj, pod, portMap)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Config{
-		Pod:   pod,
-		Ports: ports,
+		Pod:  pod,
+		Port: port,
 	}, nil
 }
