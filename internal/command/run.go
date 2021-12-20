@@ -17,7 +17,7 @@ const (
 )
 
 // Run executes hooks found on the passed resource's underlying pod annotations and opens a forwarding connection to the resource.
-func Run(ctx context.Context, client *forwarder.Client, hooksConfig *Config, cliArgs map[string]string, resource string, portMap string, command []string, streams *genericclioptions.IOStreams) error {
+func Run(ctx context.Context, client *forwarder.Client, hooksConfig *Config, cliArgs map[string]string, resource string, portMap string, streams *genericclioptions.IOStreams) error {
 	fwdConfig, err := client.NewConfig(resource, portMap)
 	if err != nil {
 		return err
