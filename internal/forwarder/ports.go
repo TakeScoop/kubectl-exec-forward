@@ -15,12 +15,12 @@ import (
 )
 
 // Translates the passed runtime object port mappings into ports that target the passed pod.
-func (c Client) translatePorts(obj runtime.Object, pod *corev1.Pod, ports []string) ([]string, error) {
+func (c Client) translatePorts(obj runtime.Object, pod *corev1.Pod, port string) (string, error) {
 	switch t := obj.(type) {
 	case *corev1.Service:
-		return translateServicePortToTargetPort(ports, *t, *pod)
+		return translateServicePortToTargetPort(port, *t, *pod)
 	default:
-		return convertPodNamedPortToNumber(ports, *pod)
+		return convertPodNamedPortToNumber(port, *pod)
 	}
 }
 
@@ -39,72 +39,60 @@ func splitPort(port string) (local, remote string) {
 // It rewrites ports as needed if the Service port declares targetPort.
 // It returns an error when a named targetPort can't find a match in the pod, or the Service did not declare
 // the port.
-func translateServicePortToTargetPort(ports []string, svc corev1.Service, pod corev1.Pod) ([]string, error) {
-	var translated []string
+func translateServicePortToTargetPort(port string, svc corev1.Service, pod corev1.Pod) (string, error) {
+	localPort, remotePort := splitPort(port)
 
-	for _, port := range ports {
-		localPort, remotePort := splitPort(port)
-
-		// nolint:gosec
-		portnum, err := strconv.Atoi(remotePort)
+	// nolint:gosec
+	portnum, err := strconv.Atoi(remotePort)
+	if err != nil {
+		svcPort, err := util.LookupServicePortNumberByName(svc, remotePort)
 		if err != nil {
-			svcPort, err := util.LookupServicePortNumberByName(svc, remotePort)
-			if err != nil {
-				return nil, err
-			}
-
-			portnum = int(svcPort)
-
-			if localPort == remotePort {
-				localPort = strconv.Itoa(portnum)
-			}
+			return "", err
 		}
 
-		containerPort, err := util.LookupContainerPortNumberByServicePort(svc, pod, int32(portnum))
-		if err != nil {
-			// can't resolve a named port, or Service did not declare this port, return an error
-			return nil, err
-		}
+		portnum = int(svcPort)
 
-		// convert the resolved target port back to a string
-		remotePort = strconv.Itoa(int(containerPort))
-
-		if localPort != remotePort {
-			translated = append(translated, fmt.Sprintf("%s:%s", localPort, remotePort))
-		} else {
-			translated = append(translated, remotePort)
+		if localPort == remotePort {
+			localPort = strconv.Itoa(portnum)
 		}
 	}
 
-	return translated, nil
+	containerPort, err := util.LookupContainerPortNumberByServicePort(svc, pod, int32(portnum))
+	if err != nil {
+		// can't resolve a named port, or Service did not declare this port, return an error
+		return "", err
+	}
+
+	// convert the resolved target port back to a string
+	remotePort = strconv.Itoa(int(containerPort))
+
+	if localPort != remotePort {
+		return fmt.Sprintf("%s:%s", localPort, remotePort), nil
+	}
+
+	return remotePort, nil
 }
 
 // convertPodNamedPortToNumber converts named ports into port numbers
 // It returns an error when a named port can't be found in the pod containers.
-func convertPodNamedPortToNumber(ports []string, pod corev1.Pod) ([]string, error) {
-	var converted []string
+func convertPodNamedPortToNumber(port string, pod corev1.Pod) (string, error) {
+	localPort, remotePort := splitPort(port)
 
-	for _, port := range ports {
-		localPort, remotePort := splitPort(port)
+	containerPortStr := remotePort
 
-		containerPortStr := remotePort
-
-		_, err := strconv.Atoi(remotePort)
+	_, err := strconv.Atoi(remotePort)
+	if err != nil {
+		containerPort, err := util.LookupContainerPortNumberByName(pod, remotePort)
 		if err != nil {
-			containerPort, err := util.LookupContainerPortNumberByName(pod, remotePort)
-			if err != nil {
-				return nil, err
-			}
-
-			containerPortStr = strconv.Itoa(int(containerPort))
+			return "", err
 		}
 
-		if localPort != remotePort {
-			converted = append(converted, fmt.Sprintf("%s:%s", localPort, containerPortStr))
-		} else {
-			converted = append(converted, containerPortStr)
-		}
+		containerPortStr = strconv.Itoa(int(containerPort))
 	}
 
-	return converted, nil
+	if localPort != remotePort {
+		return fmt.Sprintf("%s:%s", localPort, containerPortStr), nil
+	}
+
+	return containerPortStr, nil
 }

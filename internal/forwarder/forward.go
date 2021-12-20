@@ -25,7 +25,7 @@ func (c Client) Forward(config *Config, readyChan chan struct{}, stopChan chan s
 
 	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, "POST", url)
 
-	fw, err := portforward.New(dialer, config.Ports, stopChan, readyChan, c.streams.Out, c.streams.ErrOut)
+	fw, err := portforward.New(dialer, []string{config.Port}, stopChan, readyChan, c.streams.Out, c.streams.ErrOut)
 	if err != nil {
 		return err
 	}

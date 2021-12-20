@@ -66,7 +66,7 @@ func newForwardCommand(streams *genericclioptions.IOStreams) *cobra.Command {
 				cancel()
 			}()
 
-			return command.Run(cancelCtx, client, config, cmdArgs, args[0], []string{args[1]}, streams)
+			return command.Run(cancelCtx, client, config, cmdArgs, args[0], args[1], streams)
 		},
 	}
 
