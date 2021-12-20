@@ -78,12 +78,11 @@ func TestRunForwardCommand(t *testing.T) {
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{
 				{
-					Image: "nginx",
+					Image: "nginx:1",
 					Name:  "nginx",
 					Ports: []corev1.ContainerPort{{
 						ContainerPort: 80,
 					}},
-					ImagePullPolicy: corev1.PullIfNotPresent,
 				},
 			},
 		},
