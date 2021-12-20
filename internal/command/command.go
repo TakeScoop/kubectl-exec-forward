@@ -3,6 +3,7 @@ package command
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"io"
 	"os/exec"
 	"strings"
@@ -61,10 +62,16 @@ func (c Command) toCmd(ctx context.Context, config *Config, cmdArgs *Args, outpu
 }
 
 // execute runs the command with the given config and outputs.
-func (c Command) execute(ctx context.Context, config *Config, args *Args, outputs map[string]Output, streams *genericclioptions.IOStreams) (Output, error) {
+func (c Command) execute(ctx context.Context, config *Config, args *Args, previousOutputs map[string]Output, streams *genericclioptions.IOStreams) (map[string]Output, error) {
+	outputs := map[string]Output{}
+
+	for k, v := range previousOutputs {
+		outputs[k] = v
+	}
+
 	cmd, err := c.toCmd(ctx, config, args, outputs)
 	if err != nil {
-		return Output{}, err
+		return nil, err
 	}
 
 	bout := new(bytes.Buffer)
@@ -83,11 +90,29 @@ func (c Command) execute(ctx context.Context, config *Config, args *Args, output
 	cmd.Stdin = streams.In
 
 	if err := cmd.Run(); err != nil {
-		return Output{}, err
+		return nil, err
 	}
 
-	return Output{
-		Stdout: bout.String(),
-		Stderr: berr.String(),
-	}, err
+	if c.ID != "" {
+		outputs[c.ID] = Output{
+			Stdout: bout.String(),
+			Stderr: berr.String(),
+		}
+	}
+
+	return outputs, err
+}
+
+// parseCommand returns a Command from an annotation storing a single command in json format.
+func parseComand(annotations map[string]string, key string) (command Command, err error) {
+	v, ok := annotations[key]
+	if !ok {
+		return command, nil
+	}
+
+	if err := json.Unmarshal([]byte(v), &command); err != nil {
+		return command, err
+	}
+
+	return command, nil
 }

@@ -11,20 +11,16 @@ import (
 type Commands []*Command
 
 // execute runs each command in the calling slice sequentially using the passed config and the outputs accumulated to that point.
-func (c Commands) execute(ctx context.Context, config *Config, args *Args, previousOutputs map[string]Output, streams *genericclioptions.IOStreams) (map[string]Output, error) {
-	outputs := map[string]Output{}
+func (c Commands) execute(ctx context.Context, config *Config, args *Args, previousOutputs map[string]Output, streams *genericclioptions.IOStreams) (outputs map[string]Output, err error) {
+	outputs = map[string]Output{}
 	for k, v := range previousOutputs {
 		outputs[k] = v
 	}
 
 	for _, command := range c {
-		output, err := command.execute(ctx, config, args, outputs, streams)
+		outputs, err = command.execute(ctx, config, args, outputs, streams)
 		if err != nil {
 			return nil, err
-		}
-
-		if command.ID != "" {
-			outputs[command.ID] = output
 		}
 	}
 

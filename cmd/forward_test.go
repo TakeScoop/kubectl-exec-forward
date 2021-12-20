@@ -71,14 +71,14 @@ func TestRunForwardCommand(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test",
 			Annotations: map[string]string{
-				command.PreAnnotation:  `[{"command": ["echo", "test"]}]`,
-				command.PostAnnotation: fmt.Sprintf(`[{"command": ["touch", %q]}]`, doneFile),
+				command.PreAnnotation:     `[{"command": ["echo", "test"]}]`,
+				command.CommandAnnotation: fmt.Sprintf(`{"command": ["touch", %q]}`, doneFile),
 			},
 		},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{
 				{
-					Image: "nginx",
+					Image: "nginx:1",
 					Name:  "nginx",
 					Ports: []corev1.ContainerPort{{
 						ContainerPort: 80,
@@ -182,7 +182,7 @@ func waitForFinish(t *testing.T, doneChan chan bool, errChan chan error) {
 func waitForPod(ctx context.Context, t *testing.T, clientset *kubernetes.Clientset, pod *corev1.Pod) {
 	t.Helper()
 
-	assert.NoError(t, wait.PollImmediate(time.Second, time.Minute, func() (bool, error) {
+	assert.NoError(t, wait.PollImmediate(time.Second, time.Second*15, func() (bool, error) {
 		pod, err := clientset.CoreV1().Pods(pod.Namespace).Get(ctx, pod.Name, metav1.GetOptions{})
 		if err != nil {
 			return false, err
@@ -198,7 +198,7 @@ func waitForPod(ctx context.Context, t *testing.T, clientset *kubernetes.Clients
 		}
 
 		return false, nil
-	}))
+	}), "Timed out waiting for test pod to start")
 }
 
 func waitForFile(watcher *fsnotify.Watcher, fileName string, timeout time.Duration) error {
