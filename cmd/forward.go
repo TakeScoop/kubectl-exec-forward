@@ -16,7 +16,7 @@ import (
 )
 
 // newForwardCommand returns the command for forwarding to Kubernetes resources.
-func newForwardCommand(streams *genericclioptions.IOStreams) *cobra.Command {
+func newForwardCommand(streams *genericclioptions.IOStreams, version string) *cobra.Command {
 	overrides := clientcmd.ConfigOverrides{}
 
 	kubeConfigFlags := genericclioptions.NewConfigFlags(false)
@@ -35,7 +35,7 @@ func newForwardCommand(streams *genericclioptions.IOStreams) *cobra.Command {
 			}
 
 			client := forwarder.NewClient(cmdutil.NewMatchVersionFlags(kubeConfigFlags), podTimeout, streams)
-			if err := client.Init(overrides); err != nil {
+			if err := client.Init(overrides, version); err != nil {
 				return err
 			}
 
@@ -80,12 +80,12 @@ func newForwardCommand(streams *genericclioptions.IOStreams) *cobra.Command {
 }
 
 // Execute executes the forward command.
-func Execute() {
+func Execute(version string) {
 	cmd := newForwardCommand(&genericclioptions.IOStreams{
 		Out:    os.Stdout,
 		ErrOut: os.Stderr,
 		In:     os.Stdin,
-	})
+	}, version)
 
 	cobra.CheckErr(cmd.Execute())
 }

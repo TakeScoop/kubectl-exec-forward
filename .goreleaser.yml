@@ -1,8 +1,6 @@
 
 builds:
   - binary: kubectl-port_forward_hooks
-    ldflags:
-      - -s -w -X github.com/takescoop/kubectl-port-forward-hooks/internal/version.Version={{.Version}}
 brews:
   - tap:
       owner: takescoop
