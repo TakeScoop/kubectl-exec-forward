@@ -52,9 +52,6 @@ func (c *Client) Init(overrides clientcmd.ConfigOverrides) error {
 
 	rc.UserAgent = fmt.Sprintf("exec-forward/%s", version.Version)
 
-	fmt.Println("rc.UserAgent")
-	fmt.Println(rc.UserAgent)
-
 	c.restConfig = rc
 
 	cs, err := kubernetes.NewForConfig(rc)
