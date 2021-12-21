@@ -13,7 +13,7 @@ import (
 	"github.com/howeyc/fsnotify"
 	"github.com/phayes/freeport"
 	"github.com/stretchr/testify/assert"
-	"github.com/takescoop/kubectl-port-forward-hooks/internal/command"
+	"github.com/takescoop/kubectl-exec-forward/internal/command"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
