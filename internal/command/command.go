@@ -96,7 +96,7 @@ func (c Command) execute(ctx context.Context, config *Config, args *Args, previo
 	cmd.Stdin = streams.In
 
 	if err := cmd.Run(); err != nil {
-		fmt.Fprintf(streams.ErrOut, "Error running command: %s\n", c.String())
+		fmt.Fprintf(streams.ErrOut, "Error running command: %s\n", c)
 		fmt.Fprintf(streams.ErrOut, "%s\n", berr.String())
 
 		return nil, err
