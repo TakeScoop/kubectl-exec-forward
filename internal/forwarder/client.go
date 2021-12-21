@@ -49,9 +49,7 @@ func (c *Client) Init(overrides clientcmd.ConfigOverrides, version string) error
 		return err
 	}
 
-	rc.UserAgent = fmt.Sprintf("kubectl-port-forward-hooks/%s", version)
-
-	fmt.Println("user agent", rc.UserAgent)
+	rc.UserAgent = fmt.Sprintf("kubectl-exec-forward/%s", version)
 
 	c.restConfig = rc
 
