@@ -1,0 +1,10 @@
+
+builds:
+  - binary: kubectl-port_forward_hooks
+brews:
+  - tap:
+      owner: takescoop
+      name: kubectl-port-forward-hooks
+    folder: HomebrewFormula
+    homepage: https://github.com/takescoop/kubectl-port-forward-hooks
+    description: A kubectl plugin to execute hooks exposed by a Kubernetes resource around a port-forward action.
