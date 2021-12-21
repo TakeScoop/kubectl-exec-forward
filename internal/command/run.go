@@ -9,13 +9,13 @@ import (
 
 const (
 	// ArgsAnnotation is the annotation key name used to store arguments to pass to the commands.
-	ArgsAnnotation string = "local.resource.kubernetes.io/args"
+	ArgsAnnotation string = "exec-forward.pod.kubernetes.io/args"
 	// PreAnnotation is the annotation key name used to store commands run before establishing a portforward connection.
-	PreAnnotation string = "local.resource.kubernetes.io/pre-connect"
+	PreAnnotation string = "exec-forward.pod.kubernetes.io/pre-connect"
 	// PostAnnotation is the annotation key name used to store commands run after establishing a portforward connection.
-	PostAnnotation string = "local.resource.kubernetes.io/post-connect"
+	PostAnnotation string = "exec-forward.pod.kubernetes.io/post-connect"
 	// CommandAnnotation is the annotation key name used to store the main command to run after the post-connect hook has been run.
-	CommandAnnotation string = "local.resource.kubernetes.io/command"
+	CommandAnnotation string = "exec-forward.pod.kubernetes.io/command"
 )
 
 // Run executes hooks found on the passed resource's underlying pod annotations and opens a forwarding connection to the resource.
