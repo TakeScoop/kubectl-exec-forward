@@ -3,7 +3,7 @@ package command
 import (
 	"context"
 
-	"github.com/takescoop/kubectl-port-forward-hooks/internal/forwarder"
+	"github.com/takescoop/kubectl-exec-forward/internal/forwarder"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 

@@ -1,4 +1,4 @@
-module github.com/takescoop/kubectl-port-forward-hooks
+module github.com/takescoop/kubectl-exec-forward
 
 go 1.16
 

@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/takescoop/kubectl-port-forward-hooks/internal/command"
-	"github.com/takescoop/kubectl-port-forward-hooks/internal/forwarder"
+	"github.com/takescoop/kubectl-exec-forward/internal/command"
+	"github.com/takescoop/kubectl-exec-forward/internal/forwarder"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/tools/clientcmd"
 	cmdutil "k8s.io/kubectl/pkg/cmd/util"

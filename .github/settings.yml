@@ -1,7 +1,7 @@
 _extends: .github
 repository:
-  name: kubectl-port-forward-hooks
-  description: A kubectl plugin to execute hooks exposed by a Kubernetes resource around a port-forward action.
+  name: kubectl-exec-forward
+  description: A kubectl plugin to run exec hooks exposed by a Kubernetes pod around a port-forward action.
   topics: kubernetes, kubectl
   allow_auto_merge: true
 branches:
