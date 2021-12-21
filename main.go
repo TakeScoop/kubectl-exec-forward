@@ -4,10 +4,9 @@ import (
 	"github.com/takescoop/kubectl-port-forward-hooks/cmd"
 )
 
-// Version will be replaced with the Git tag version at build time during release.
-// nolint: gochecknoglobals
-var Version string
+// version will be replaced with the Git tag version at build time during release.
+var version string
 
 func main() {
-	cmd.Execute(Version)
+	cmd.Execute(version)
 }
