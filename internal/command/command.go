@@ -62,8 +62,8 @@ func (c Command) toCmd(ctx context.Context, config *Config, cmdArgs *Args, outpu
 	return exec.CommandContext(ctx, name, args...), nil
 }
 
-// ToString returns the command as a string.
-func (c Command) ToString() string {
+// String returns the command as a string.
+func (c Command) String() string {
 	return strings.Join(c.Command, " ")
 }
 
@@ -96,7 +96,7 @@ func (c Command) execute(ctx context.Context, config *Config, args *Args, previo
 	cmd.Stdin = streams.In
 
 	if err := cmd.Run(); err != nil {
-		fmt.Fprintf(streams.ErrOut, "Error running command: %s\n", c.ToString())
+		fmt.Fprintf(streams.ErrOut, "Error running command: %s\n", c.String())
 		fmt.Fprintf(streams.ErrOut, "%s\n", berr.String())
 
 		return nil, err
