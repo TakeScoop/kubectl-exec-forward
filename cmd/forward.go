@@ -22,7 +22,7 @@ func newForwardCommand(streams *genericclioptions.IOStreams, version string) *co
 	kubeConfigFlags := genericclioptions.NewConfigFlags(false)
 
 	cmd := &cobra.Command{
-		Use:   "kubectl port forward hooks TYPE/NAME PORT [options] -- [command...]",
+		Use:   "kubectl exec-forward TYPE/NAME PORT [options] -- [command...]",
 		Short: "Port forward to Kubernetes resources and execute commands found in annotations",
 		Args:  cobra.MinimumNArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {

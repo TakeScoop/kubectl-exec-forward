@@ -15,5 +15,6 @@
 # vendor/
 
 terraform/
-kubectl-port-forward-hooks
+kubectl-exec-forward
+kubectl-exec_forward
 dist/
