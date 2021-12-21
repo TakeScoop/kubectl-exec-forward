@@ -51,6 +51,8 @@ func (c *Client) Init(overrides clientcmd.ConfigOverrides, version string) error
 
 	rc.UserAgent = fmt.Sprintf("kubectl-port-forward-hooks/%s", version)
 
+	fmt.Println(rc.UserAgent)
+
 	c.restConfig = rc
 
 	cs, err := kubernetes.NewForConfig(rc)
