@@ -1,8 +1,11 @@
 package forwarder
 
 import (
+	"fmt"
+	"os/user"
 	"time"
 
+	"github.com/takescoop/kubectl-port-forward-hooks/internal/version"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -47,6 +50,13 @@ func (c *Client) Init(overrides clientcmd.ConfigOverrides) error {
 	if err != nil {
 		return err
 	}
+
+	user, err := user.Current()
+	if err != nil {
+		return err
+	}
+
+	rc.UserAgent = fmt.Sprintf("exec-forward/%s/%s", version.Version, user.Name)
 
 	c.restConfig = rc
 
