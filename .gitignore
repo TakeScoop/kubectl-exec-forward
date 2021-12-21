@@ -16,3 +16,4 @@
 
 terraform/
 kubectl-port-forward-hooks
+dist/

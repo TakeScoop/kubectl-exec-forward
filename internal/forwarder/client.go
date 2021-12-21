@@ -2,7 +2,6 @@ package forwarder
 
 import (
 	"fmt"
-	"os/user"
 	"time"
 
 	"github.com/takescoop/kubectl-port-forward-hooks/internal/version"
@@ -51,12 +50,10 @@ func (c *Client) Init(overrides clientcmd.ConfigOverrides) error {
 		return err
 	}
 
-	user, err := user.Current()
-	if err != nil {
-		return err
-	}
+	rc.UserAgent = fmt.Sprintf("exec-forward/%s", version.Version)
 
-	rc.UserAgent = fmt.Sprintf("exec-forward/%s/%s", version.Version, user.Name)
+	fmt.Println("rc.UserAgent")
+	fmt.Println(rc.UserAgent)
 
 	c.restConfig = rc
 
