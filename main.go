@@ -5,7 +5,7 @@ import (
 )
 
 // version will be replaced with the Git tag version at build time during release.
-var version string = "dev"
+var version = "dev"
 
 func main() {
 	cmd.Execute(version)
