@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"os/exec"
 	"strings"
@@ -61,6 +62,10 @@ func (c Command) toCmd(ctx context.Context, config *Config, cmdArgs *Args, outpu
 	return exec.CommandContext(ctx, name, args...), nil
 }
 
+func (c Command) ToString() string {
+	return strings.Join(c.Command, " ")
+}
+
 // execute runs the command with the given config and outputs.
 func (c Command) execute(ctx context.Context, config *Config, args *Args, previousOutputs map[string]Output, streams *genericclioptions.IOStreams) (map[string]Output, error) {
 	outputs := map[string]Output{}
@@ -90,6 +95,9 @@ func (c Command) execute(ctx context.Context, config *Config, args *Args, previo
 	cmd.Stdin = streams.In
 
 	if err := cmd.Run(); err != nil {
+		fmt.Fprintf(streams.ErrOut, "Error running command: %s\n", c.ToString())
+		fmt.Fprintf(streams.ErrOut, "%s\n", berr.String())
+
 		return nil, err
 	}
 
