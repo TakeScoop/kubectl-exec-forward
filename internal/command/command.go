@@ -62,7 +62,7 @@ func (c Command) toCmd(ctx context.Context, config *Config, cmdArgs *Args, outpu
 	return exec.CommandContext(ctx, name, args...), nil
 }
 
-// ToString returns the command as a string
+// ToString returns the command as a string.
 func (c Command) ToString() string {
 	return strings.Join(c.Command, " ")
 }
