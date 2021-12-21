@@ -97,7 +97,7 @@ func TestRunForwardCommand(t *testing.T) {
 	cmd := newForwardCommand(&genericclioptions.IOStreams{
 		Out:    out,
 		ErrOut: outErr,
-	})
+	}, "0.0.0")
 
 	localPort := freeport.GetPort()
 

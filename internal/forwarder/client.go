@@ -1,6 +1,7 @@
 package forwarder
 
 import (
+	"fmt"
 	"time"
 
 	"k8s.io/cli-runtime/pkg/genericclioptions"
@@ -35,7 +36,7 @@ func NewClient(getter *cmdutil.MatchVersionFlags, timeout time.Duration, streams
 }
 
 // Init instantiates a Kubernetes client and rest configuration for the forwarding client.
-func (c *Client) Init(overrides clientcmd.ConfigOverrides) error {
+func (c *Client) Init(overrides clientcmd.ConfigOverrides, version string) error {
 	kc := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 		clientcmd.NewDefaultClientConfigLoadingRules(),
 		&overrides,
@@ -47,6 +48,8 @@ func (c *Client) Init(overrides clientcmd.ConfigOverrides) error {
 	if err != nil {
 		return err
 	}
+
+	rc.UserAgent = fmt.Sprintf("kubectl-exec-forward/%s", version)
 
 	c.restConfig = rc
 
