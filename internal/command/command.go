@@ -91,9 +91,12 @@ func (c Command) execute(ctx context.Context, config *Config, args *Args, previo
 		ews = append(ews, streams.ErrOut)
 	}
 
+	if c.Interactive {
+		cmd.Stdin = streams.In
+	}
+
 	cmd.Stdout = io.MultiWriter(ows...)
 	cmd.Stderr = io.MultiWriter(ews...)
-	cmd.Stdin = streams.In
 
 	if err := cmd.Run(); err != nil {
 		fmt.Fprintf(streams.ErrOut, "Error running command: %s\n", c)

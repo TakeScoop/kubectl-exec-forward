@@ -29,6 +29,8 @@ func newHooks(annotations map[string]string, config *Config) (*Hooks, error) {
 		return nil, err
 	}
 
+	c.Interactive = true
+
 	if config != nil {
 		if len(config.Command) > 0 {
 			c.Command = append(config.Command, c.Command[1:]...)
