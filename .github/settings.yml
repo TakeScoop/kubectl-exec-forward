@@ -4,6 +4,7 @@ repository:
   description: A kubectl plugin to run exec hooks exposed by a Kubernetes pod around a port-forward action.
   topics: kubernetes, kubectl
   allow_auto_merge: true
+  private: false
 branches:
   - name: master
     protection:
