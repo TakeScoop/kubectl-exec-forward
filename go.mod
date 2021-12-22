@@ -7,6 +7,7 @@ require (
 	github.com/phayes/freeport v0.0.0-20180830031419-95f893ade6f2
 	github.com/spf13/cobra v1.3.0
 	github.com/stretchr/testify v1.7.0
+	github.com/tidwall/gjson v1.12.1
 	k8s.io/api v0.23.1
 	k8s.io/apimachinery v0.23.1
 	k8s.io/cli-runtime v0.23.1
