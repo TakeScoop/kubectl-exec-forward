@@ -10,6 +10,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/tidwall/gjson"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
@@ -40,6 +41,7 @@ func (c Command) toCmd(ctx context.Context, config *Config, cmdArgs *Args, outpu
 	for i, a := range rawArgs {
 		tpl, err := template.New(c.ID).Option("missingkey=error").Funcs(template.FuncMap{
 			"trim": strings.TrimSpace,
+			"json": gjson.Get,
 		}).Parse(a)
 		if err != nil {
 			return nil, err
