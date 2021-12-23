@@ -7,6 +7,12 @@ type Hooks struct {
 	Command Command
 }
 
+const (
+	preConnectHookType  string = "pre-connect"
+	postConnectHookType string = "post-connect"
+	commandHookType     string = "command"
+)
+
 // newHooks returns a new Hooks struct assembled from the passed annotations.
 func newHooks(annotations map[string]string, config *Config) (*Hooks, error) {
 	pre, err := parseCommands(annotations, PreAnnotation)
