@@ -52,6 +52,7 @@ func Run(ctx context.Context, client *forwarder.Client, hooksConfig *Config, cli
 	fwdErrChan := make(chan error)
 	stopChan := make(chan struct{})
 	readyChan := make(chan struct{})
+	commandDoneChan := make(chan bool)
 
 	cancelCtx, cancel := context.WithCancel(ctx)
 
@@ -64,6 +65,10 @@ func Run(ctx context.Context, client *forwarder.Client, hooksConfig *Config, cli
 
 		if _, err = hooks.Command.execute(cancelCtx, hooksConfig, args, outputs, streams); err != nil {
 			hookErrChan <- err
+		}
+
+		if !hooksConfig.Persist {
+			commandDoneChan <- true
 		}
 	}()
 
@@ -85,6 +90,12 @@ func Run(ctx context.Context, client *forwarder.Client, hooksConfig *Config, cli
 			cancel()
 
 			return err
+		case <-commandDoneChan:
+			stopChan <- struct{}{}
+
+			cancel()
+
+			return nil
 		case <-ctx.Done():
 			stopChan <- struct{}{}
 
