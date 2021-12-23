@@ -106,7 +106,10 @@ func (c Command) execute(ctx context.Context, config *Config, args *Args, previo
 	cmd.Stderr = io.MultiWriter(ews...)
 
 	if err := cmd.Run(); err != nil {
-		fmt.Fprintf(streams.ErrOut, "Error running command: %v\n", cmd.Args)
+		name, args, _ := c.render(config, args, outputs, false)
+		args = append([]string{name}, args...)
+
+		fmt.Fprintf(streams.ErrOut, "Error running command: %v\n", args)
 		fmt.Fprintf(streams.ErrOut, "%s\n", berr)
 
 		return nil, err
