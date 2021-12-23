@@ -15,7 +15,7 @@ func TestParseCommands(t *testing.T) {
 		assert.NoError(t, err)
 
 		expected := Commands{
-			{ID: "", Command: []string{"echo", "pre"}},
+			{ID: "", Command: []string{"echo", "pre"}, hookType: preConnectHookType},
 		}
 		assert.Equal(t, expected, commands)
 	})
@@ -28,8 +28,8 @@ func TestParseCommands(t *testing.T) {
 		assert.NoError(t, err)
 
 		expected := Commands{
-			{ID: "", Command: []string{"echo", "post1"}},
-			{ID: "foo", Command: []string{"echo", "post2"}},
+			{ID: "", Command: []string{"echo", "post1"}, hookType: postConnectHookType},
+			{ID: "foo", Command: []string{"echo", "post2"}, hookType: postConnectHookType},
 		}
 		assert.Equal(t, expected, commands)
 	})

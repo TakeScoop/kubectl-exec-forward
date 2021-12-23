@@ -14,11 +14,20 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-// Command represents a runnable command.
-type Command struct {
+type commandInput struct {
 	ID          string   `json:"id"`
 	Command     []string `json:"command"`
 	Interactive bool     `json:"interactive"`
+	Description string   `json:"description"`
+}
+
+// Command represents a runnable command.
+type Command struct {
+	ID          string
+	Command     []string
+	Interactive bool
+	Description string
+	hookType    string
 }
 
 type templateInputs struct {
@@ -80,6 +89,12 @@ func (c Command) execute(ctx context.Context, config *Config, args *Args, previo
 	bout := new(bytes.Buffer)
 	berr := new(bytes.Buffer)
 
+	// Send main command IO directly to passed streams to avoid missed prompts on interactive commands
+	// if c.hookType == commandHookType {
+	// 	cmd.Stdout = streams.Out
+	// 	cmd.Stderr = streams.ErrOut
+	// 	cmd.Stdin = streams.In
+	// } else {
 	ows := []io.Writer{bout}
 	ews := []io.Writer{berr}
 
@@ -94,6 +109,7 @@ func (c Command) execute(ctx context.Context, config *Config, args *Args, previo
 
 	cmd.Stdout = io.MultiWriter(ows...)
 	cmd.Stderr = io.MultiWriter(ews...)
+	// }
 
 	if err := cmd.Run(); err != nil {
 		fmt.Fprintf(streams.ErrOut, "Error running command: %v\n", cmd.Args)
@@ -102,7 +118,7 @@ func (c Command) execute(ctx context.Context, config *Config, args *Args, previo
 		return nil, err
 	}
 
-	if c.ID != "" {
+	if c.ID != "" && c.hookType != commandHookType {
 		outputs[c.ID] = Output{
 			Stdout: bout.String(),
 			Stderr: berr.String(),
@@ -119,9 +135,34 @@ func parseComand(annotations map[string]string, key string) (command Command, er
 		return command, nil
 	}
 
-	if err := json.Unmarshal([]byte(v), &command); err != nil {
+	var ci commandInput
+
+	if err := json.Unmarshal([]byte(v), &ci); err != nil {
 		return command, err
 	}
 
-	return command, nil
+	return ci.toCommand(getHookTypeFromAnnotationKey(key)), nil
+}
+
+func (ci commandInput) toCommand(hookType string) Command {
+	return Command{
+		ID:          ci.ID,
+		Command:     ci.Command,
+		Interactive: ci.Interactive,
+		hookType:    hookType,
+	}
+}
+
+// Returns the hook type based on the passed annotation key.
+func getHookTypeFromAnnotationKey(key string) string {
+	switch key {
+	case PreAnnotation:
+		return preConnectHookType
+	case PostAnnotation:
+		return postConnectHookType
+	case CommandAnnotation:
+		return commandHookType
+	default:
+		return ""
+	}
 }
