@@ -58,6 +58,13 @@ func newForwardCommand(streams *genericclioptions.IOStreams, version string) *co
 
 			config.Verbose = v
 
+			p, err := flags.GetBool("persist")
+			if err != nil {
+				return err
+			}
+
+			config.Persist = p
+
 			cancelCtx, cancel := context.WithCancel(ctx)
 
 			go func() {
@@ -73,6 +80,7 @@ func newForwardCommand(streams *genericclioptions.IOStreams, version string) *co
 	cmd.Flags().StringArray("arg", []string{}, "key=value arguments to be passed to commands")
 	cmd.Flags().Bool("verbose", false, "Whether to write command outputs to console")
 	cmd.Flags().Duration("pod-timeout", 500, "Time to wait for an attachable pod to become available")
+	cmd.Flags().Bool("persist", false, "Whether to persist the connection after the main command has executed")
 
 	clientcmd.BindOverrideFlags(&overrides, cmd.PersistentFlags(), clientcmd.RecommendedConfigOverrideFlags(""))
 
