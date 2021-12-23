@@ -86,21 +86,21 @@ func (c Command) String() string {
 		str = append(str, chalk.Cyan.Color(fmt.Sprintf("(id=%s)", c.ID)))
 	}
 
-	nameAndDescription := ""
+	var nameAndDescription []string
 
 	if c.Name != "" {
-		nameAndDescription = c.Name
+		nameAndDescription = append(nameAndDescription, c.Name)
 	}
 
 	if c.Description != "" {
-		nameAndDescription = fmt.Sprintf("%s - %s", nameAndDescription, c.Description)
+		nameAndDescription = append(nameAndDescription, c.Description)
 	}
 
-	if nameAndDescription != "" {
-		str = append(str, chalk.Green.Color(nameAndDescription))
+	if len(nameAndDescription) > 0 {
+		str = append(str, chalk.Green.Color(strings.Join(nameAndDescription, ": ")))
 	}
 
-	if c.ID == "" && nameAndDescription == "" {
+	if c.ID == "" && len(nameAndDescription) == 0 {
 		str = append(str, chalk.Green.Color("no info"))
 	}
 
