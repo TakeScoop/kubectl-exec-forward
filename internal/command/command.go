@@ -29,22 +29,33 @@ type templateInputs struct {
 
 // toCmd returns a golang cmd object from the calling command.
 func (c Command) toCmd(ctx context.Context, config *Config, cmdArgs *Args, outputs map[string]Output) (*exec.Cmd, error) {
-	name := c.Command[0]
+	name, args, err := c.render(config, cmdArgs, outputs, true)
+	if err != nil {
+		return nil, err
+	}
+
+	// nolint:gosec
+	return exec.CommandContext(ctx, name, args...), nil
+}
+
+func (c Command) render(config *Config, cmdArgs *Args, outputs map[string]Output, showSensitive bool) (name string, args []string, err error) {
+	name = c.Command[0]
 	rawArgs := []string{}
 
 	if len(c.Command) > 1 {
 		rawArgs = append(rawArgs, c.Command[1:]...)
 	}
 
-	args := make([]string, len(rawArgs))
+	args = make([]string, len(rawArgs))
 
 	for i, a := range rawArgs {
 		tpl, err := template.New(c.ID).Option("missingkey=error").Funcs(template.FuncMap{
-			"trim": strings.TrimSpace,
-			"json": gjson.Get,
+			"trim":      strings.TrimSpace,
+			"json":      gjson.Get,
+			"sensitive": sensitiveFunc(showSensitive),
 		}).Parse(a)
 		if err != nil {
-			return nil, err
+			return "", nil, err
 		}
 
 		o := new(bytes.Buffer)
@@ -54,14 +65,13 @@ func (c Command) toCmd(ctx context.Context, config *Config, cmdArgs *Args, outpu
 			Args:    cmdArgs,
 			Outputs: outputs,
 		}); err != nil {
-			return nil, err
+			return "", nil, err
 		}
 
 		args[i] = o.String()
 	}
 
-	// nolint:gosec
-	return exec.CommandContext(ctx, name, args...), nil
+	return name, args, nil
 }
 
 // execute runs the command with the given config and outputs.
@@ -96,7 +106,10 @@ func (c Command) execute(ctx context.Context, config *Config, args *Args, previo
 	cmd.Stderr = io.MultiWriter(ews...)
 
 	if err := cmd.Run(); err != nil {
-		fmt.Fprintf(streams.ErrOut, "Error running command: %v\n", cmd.Args)
+		name, args, _ := c.render(config, args, outputs, false)
+		args = append([]string{name}, args...)
+
+		fmt.Fprintf(streams.ErrOut, "Error running command: %v\n", args)
 		fmt.Fprintf(streams.ErrOut, "%s\n", berr)
 
 		return nil, err
