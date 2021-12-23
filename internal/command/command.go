@@ -75,7 +75,7 @@ func (c Command) render(config *Config, cmdArgs *Args, outputs map[string]Output
 }
 
 // execute runs the command with the given config and outputs.
-func (c Command) execute(ctx context.Context, config *Config, args *Args, previousOutputs map[string]Output, streams *genericclioptions.IOStreams) (map[string]Output, error) {
+func (c Command) execute(ctx context.Context, config *Config, args *Args, previousOutputs map[string]Output, streams *genericclioptions.IOStreams, storeOutput bool) (map[string]Output, error) {
 	outputs := map[string]Output{}
 
 	for k, v := range previousOutputs {
@@ -102,8 +102,13 @@ func (c Command) execute(ctx context.Context, config *Config, args *Args, previo
 		cmd.Stdin = streams.In
 	}
 
-	cmd.Stdout = io.MultiWriter(ows...)
-	cmd.Stderr = io.MultiWriter(ews...)
+	if storeOutput {
+		cmd.Stdout = io.MultiWriter(ows...)
+		cmd.Stderr = io.MultiWriter(ews...)
+	} else {
+		cmd.Stdout = streams.Out
+		cmd.Stderr = streams.ErrOut
+	}
 
 	if err := cmd.Run(); err != nil {
 		name, args, _ := c.render(config, args, outputs, false)
