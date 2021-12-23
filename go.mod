@@ -8,7 +8,7 @@ require (
 	github.com/spf13/cobra v1.3.0
 	github.com/stretchr/testify v1.7.0
 	github.com/tidwall/gjson v1.12.1
-	github.com/ttacon/chalk v0.0.0-20160626202418-22c06c80ed31 // indirect
+	github.com/ttacon/chalk v0.0.0-20160626202418-22c06c80ed31
 	k8s.io/api v0.23.1
 	k8s.io/apimachinery v0.23.1
 	k8s.io/cli-runtime v0.23.1
