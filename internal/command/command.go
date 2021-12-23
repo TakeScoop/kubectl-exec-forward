@@ -28,7 +28,6 @@ type Command struct {
 	ID          string
 	Command     []string
 	Interactive bool
-	Name        string
 	Description string
 	hookType    string
 }
@@ -86,21 +85,11 @@ func (c Command) String() string {
 		str = append(str, chalk.Cyan.Color(fmt.Sprintf("(id=%s)", c.ID)))
 	}
 
-	var nameAndDescription []string
-
-	if c.Name != "" {
-		nameAndDescription = append(nameAndDescription, c.Name)
-	}
-
 	if c.Description != "" {
-		nameAndDescription = append(nameAndDescription, c.Description)
+		str = append(str, chalk.Green.Color(c.Description))
 	}
 
-	if len(nameAndDescription) > 0 {
-		str = append(str, chalk.Green.Color(strings.Join(nameAndDescription, ": ")))
-	}
-
-	if c.ID == "" && len(nameAndDescription) == 0 {
+	if c.ID == "" && c.Description == "" {
 		str = append(str, chalk.Green.Color("no info"))
 	}
 
@@ -163,7 +152,6 @@ func (ci commandInput) toCommand(hookType string) Command {
 		Command:     ci.Command,
 		Interactive: ci.Interactive,
 		hookType:    hookType,
-		Name:        ci.Name,
 		Description: ci.Description,
 	}
 }
