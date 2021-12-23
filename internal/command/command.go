@@ -29,7 +29,7 @@ type templateInputs struct {
 
 // toCmd returns a golang cmd object from the calling command.
 func (c Command) toCmd(ctx context.Context, config *Config, cmdArgs *Args, outputs map[string]Output) (*exec.Cmd, error) {
-	name, args, err := c.render(config, cmdArgs, outputs)
+	name, args, err := c.render(config, cmdArgs, outputs, true)
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +38,7 @@ func (c Command) toCmd(ctx context.Context, config *Config, cmdArgs *Args, outpu
 	return exec.CommandContext(ctx, name, args...), nil
 }
 
-func (c Command) render(config *Config, cmdArgs *Args, outputs map[string]Output) (name string, args []string, err error) {
+func (c Command) render(config *Config, cmdArgs *Args, outputs map[string]Output, showSensitive bool) (name string, args []string, err error) {
 	name = c.Command[0]
 	rawArgs := []string{}
 
@@ -50,8 +50,9 @@ func (c Command) render(config *Config, cmdArgs *Args, outputs map[string]Output
 
 	for i, a := range rawArgs {
 		tpl, err := template.New(c.ID).Option("missingkey=error").Funcs(template.FuncMap{
-			"trim": strings.TrimSpace,
-			"json": gjson.Get,
+			"trim":      strings.TrimSpace,
+			"json":      gjson.Get,
+			"sensitive": sensitiveFunc(showSensitive),
 		}).Parse(a)
 		if err != nil {
 			return "", nil, err
