@@ -33,4 +33,17 @@ func TestParseCommands(t *testing.T) {
 		}
 		assert.Equal(t, expected, commands)
 	})
+
+	t.Run("Parse", func(t *testing.T) {
+		commands, err := parseCommands(map[string]string{
+			PostAnnotation: `[{"command":["echo","post1"], "name": "send post1 to stdout"},{"command":["echo", "post2"],"id":"foo"}]`,
+		}, PostAnnotation)
+		assert.NoError(t, err)
+
+		expected := Commands{
+			{ID: "", Command: []string{"echo", "post1"}, Name: "send post1 to stdout"},
+			{ID: "foo", Command: []string{"echo", "post2"}},
+		}
+		assert.Equal(t, expected, commands)
+	})
 }

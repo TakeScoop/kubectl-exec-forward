@@ -11,6 +11,7 @@ import (
 	"text/template"
 
 	"github.com/tidwall/gjson"
+	"github.com/ttacon/chalk"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
@@ -19,6 +20,7 @@ type Command struct {
 	ID          string   `json:"id"`
 	Command     []string `json:"command"`
 	Interactive bool     `json:"interactive"`
+	Name        string   `json:"name"`
 }
 
 type templateInputs struct {
@@ -74,6 +76,25 @@ func (c Command) render(config *Config, cmdArgs *Args, outputs map[string]Output
 	return name, args, nil
 }
 
+// ToString returns the command as a human readable string.
+func (c Command) ToString(config *Config, cmdArgs *Args, outputs map[string]Output) (string, error) {
+	str := []string{}
+
+	if c.Name != "" {
+		str = append(str, chalk.Cyan.Color(c.Name))
+	}
+
+	name, args, err := c.render(config, cmdArgs, outputs, false)
+	if err != nil {
+		return "", err
+	}
+
+	command := append([]string{name}, args...)
+	str = append(str, chalk.Green.Color(strings.Join(command, " ")))
+
+	return fmt.Sprintf("%s\n", strings.Join(str, ": ")), nil
+}
+
 // execute runs the command with the given config and outputs.
 func (c Command) execute(ctx context.Context, config *Config, args *Args, previousOutputs map[string]Output, streams *genericclioptions.IOStreams) (map[string]Output, error) {
 	outputs := map[string]Output{}
@@ -86,6 +107,13 @@ func (c Command) execute(ctx context.Context, config *Config, args *Args, previo
 	if err != nil {
 		return nil, err
 	}
+
+	cmdStr, err := c.ToString(config, args, outputs)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Fprintf(streams.ErrOut, "> %s", cmdStr)
 
 	bout := new(bytes.Buffer)
 	berr := new(bytes.Buffer)
@@ -107,10 +135,10 @@ func (c Command) execute(ctx context.Context, config *Config, args *Args, previo
 
 	if err := cmd.Run(); err != nil {
 		name, args, _ := c.render(config, args, outputs, false)
-		args = append([]string{name}, args...)
 
-		fmt.Fprintf(streams.ErrOut, "Error running command: %v\n", args)
-		fmt.Fprintf(streams.ErrOut, "%s\n", berr)
+		errStr := fmt.Sprintf("Error running command: %v\n%s\n", append([]string{name}, args...), berr)
+
+		fmt.Fprint(streams.ErrOut, chalk.Red.Color(errStr))
 
 		return nil, err
 	}
