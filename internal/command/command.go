@@ -64,11 +64,6 @@ func (c Command) toCmd(ctx context.Context, config *Config, cmdArgs *Args, outpu
 	return exec.CommandContext(ctx, name, args...), nil
 }
 
-// String returns the command as a string.
-func (c Command) String() string {
-	return strings.Join(c.Command, " ")
-}
-
 // execute runs the command with the given config and outputs.
 func (c Command) execute(ctx context.Context, config *Config, args *Args, previousOutputs map[string]Output, streams *genericclioptions.IOStreams) (map[string]Output, error) {
 	outputs := map[string]Output{}
@@ -101,7 +96,7 @@ func (c Command) execute(ctx context.Context, config *Config, args *Args, previo
 	cmd.Stderr = io.MultiWriter(ews...)
 
 	if err := cmd.Run(); err != nil {
-		fmt.Fprintf(streams.ErrOut, "Error running command: %s\n", c)
+		fmt.Fprintf(streams.ErrOut, "Error running command: %v\n", cmd.Args)
 		fmt.Fprintf(streams.ErrOut, "%s\n", berr)
 
 		return nil, err
