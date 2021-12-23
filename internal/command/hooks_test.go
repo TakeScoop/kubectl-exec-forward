@@ -20,7 +20,7 @@ func TestNewHooks(t *testing.T) {
 		}, nil)
 		assert.NoError(t, err)
 
-		assert.Equal(t, Commands{{Command: []string{"echo", "hello"}, hookType: preConnectHookType}}, actual.Pre)
+		assert.Equal(t, Commands{{Command: []string{"echo", "hello"}}}, actual.Pre)
 	})
 
 	t.Run("return hooks with post-connect commands", func(t *testing.T) {
@@ -29,7 +29,7 @@ func TestNewHooks(t *testing.T) {
 		}, nil)
 		assert.NoError(t, err)
 
-		assert.Equal(t, Commands{{Command: []string{"echo", "hello"}, hookType: postConnectHookType}}, actual.Post)
+		assert.Equal(t, Commands{{Command: []string{"echo", "hello"}}}, actual.Post)
 	})
 
 	t.Run("return hooks with a main command", func(t *testing.T) {
@@ -38,7 +38,7 @@ func TestNewHooks(t *testing.T) {
 		}, nil)
 		assert.NoError(t, err)
 
-		assert.Equal(t, Command{Command: []string{"echo", "hello"}, Interactive: true, hookType: commandHookType}, actual.Command)
+		assert.Equal(t, Command{Command: []string{"echo", "hello"}, Interactive: true}, actual.Command)
 	})
 
 	t.Run("replace the command portion of the main command if command-override is supplied", func(t *testing.T) {
@@ -48,7 +48,7 @@ func TestNewHooks(t *testing.T) {
 		assert.NoError(t, err)
 
 		assert.Equal(t, &Hooks{
-			Command: Command{Command: []string{"touch", "foo", "hello"}, Interactive: true, hookType: commandHookType},
+			Command: Command{Command: []string{"touch", "foo", "hello"}, Interactive: true},
 		}, actual)
 	})
 
@@ -59,7 +59,7 @@ func TestNewHooks(t *testing.T) {
 		assert.NoError(t, err)
 
 		assert.Equal(t, &Hooks{
-			Command: Command{Command: []string{"echo", "hello"}, Interactive: true, hookType: commandHookType},
+			Command: Command{Command: []string{"echo", "hello"}, Interactive: true},
 		}, actual)
 	})
 }

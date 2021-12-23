@@ -15,20 +15,12 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-type commandInput struct {
+// Command represents a runnable command.
+type Command struct {
 	ID          string   `json:"id"`
 	Command     []string `json:"command"`
 	Interactive bool     `json:"interactive"`
-	Description string   `json:"description"`
-}
-
-// Command represents a runnable command.
-type Command struct {
-	ID          string
-	Command     []string
-	Interactive bool
-	Description string
-	hookType    string
+	Name        string   `json:"name"`
 }
 
 type templateInputs struct {
@@ -84,25 +76,23 @@ func (c Command) render(config *Config, cmdArgs *Args, outputs map[string]Output
 	return name, args, nil
 }
 
-// String returns the command as a human readable string.
-func (c Command) String() string {
-	str := []string{
-		chalk.Yellow.Color(c.hookType),
+// ToString returns the command as a human readable string.
+func (c Command) ToString(config *Config, cmdArgs *Args, outputs map[string]Output) (string, error) {
+	str := []string{}
+
+	if c.Name != "" {
+		str = append(str, chalk.Cyan.Color(c.Name))
 	}
 
-	if c.ID != "" {
-		str = append(str, chalk.Cyan.Color(fmt.Sprintf("(id=%s)", c.ID)))
+	name, args, err := c.render(config, cmdArgs, outputs, false)
+	if err != nil {
+		return "", err
 	}
 
-	if c.Description != "" {
-		str = append(str, chalk.Green.Color(c.Description))
-	}
+	command := append([]string{name}, args...)
+	str = append(str, chalk.Green.Color(strings.Join(command, " ")))
 
-	if c.ID == "" && c.Description == "" {
-		str = append(str, chalk.Green.Color("no info"))
-	}
-
-	return fmt.Sprintf("%s\n", strings.Join(str, ": "))
+	return fmt.Sprintf("%s\n", strings.Join(str, ": ")), nil
 }
 
 // execute runs the command with the given config and outputs.
@@ -118,7 +108,12 @@ func (c Command) execute(ctx context.Context, config *Config, args *Args, previo
 		return nil, err
 	}
 
-	fmt.Fprintf(streams.ErrOut, "running %s", c)
+	cmdStr, err := c.ToString(config, args, outputs)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Fprintf(streams.ErrOut, "> %s", cmdStr)
 
 	bout := new(bytes.Buffer)
 	berr := new(bytes.Buffer)
@@ -140,10 +135,10 @@ func (c Command) execute(ctx context.Context, config *Config, args *Args, previo
 
 	if err := cmd.Run(); err != nil {
 		name, args, _ := c.render(config, args, outputs, false)
-		args = append([]string{name}, args...)
 
-		fmt.Fprintf(streams.ErrOut, "Error running command: %v\n", args)
-		fmt.Fprintf(streams.ErrOut, "%s\n", berr)
+		errStr := fmt.Sprintf("Error running command: %v\n%s\n", append([]string{name}, args...), berr)
+
+		fmt.Fprint(streams.ErrOut, chalk.Red.Color(errStr))
 
 		return nil, err
 	}
@@ -158,30 +153,6 @@ func (c Command) execute(ctx context.Context, config *Config, args *Args, previo
 	return outputs, err
 }
 
-func (ci commandInput) toCommand(hookType string) Command {
-	return Command{
-		ID:          ci.ID,
-		Command:     ci.Command,
-		Interactive: ci.Interactive,
-		hookType:    hookType,
-		Description: ci.Description,
-	}
-}
-
-// Returns the hook type based on the passed annotation key.
-func getHookTypeFromAnnotationKey(key string) string {
-	switch key {
-	case PreAnnotation:
-		return preConnectHookType
-	case PostAnnotation:
-		return postConnectHookType
-	case CommandAnnotation:
-		return commandHookType
-	default:
-		return ""
-	}
-}
-
 // parseCommand returns a Command from an annotation storing a single command in json format.
 func parseComand(annotations map[string]string, key string) (command Command, err error) {
 	v, ok := annotations[key]
@@ -189,11 +160,9 @@ func parseComand(annotations map[string]string, key string) (command Command, er
 		return command, nil
 	}
 
-	var ci commandInput
-
-	if err := json.Unmarshal([]byte(v), &ci); err != nil {
+	if err := json.Unmarshal([]byte(v), &command); err != nil {
 		return command, err
 	}
 
-	return ci.toCommand(getHookTypeFromAnnotationKey(key)), nil
+	return command, nil
 }

@@ -15,7 +15,7 @@ func TestParseCommands(t *testing.T) {
 		assert.NoError(t, err)
 
 		expected := Commands{
-			{ID: "", Command: []string{"echo", "pre"}, hookType: preConnectHookType},
+			{ID: "", Command: []string{"echo", "pre"}},
 		}
 		assert.Equal(t, expected, commands)
 	})
@@ -28,21 +28,21 @@ func TestParseCommands(t *testing.T) {
 		assert.NoError(t, err)
 
 		expected := Commands{
-			{ID: "", Command: []string{"echo", "post1"}, hookType: postConnectHookType},
-			{ID: "foo", Command: []string{"echo", "post2"}, hookType: postConnectHookType},
+			{ID: "", Command: []string{"echo", "post1"}},
+			{ID: "foo", Command: []string{"echo", "post2"}},
 		}
 		assert.Equal(t, expected, commands)
 	})
 
 	t.Run("Parse", func(t *testing.T) {
 		commands, err := parseCommands(map[string]string{
-			PostAnnotation: `[{"command":["echo","post1"], "description": "send post1 to stdout"},{"command":["echo", "post2"],"id":"foo"}]`,
+			PostAnnotation: `[{"command":["echo","post1"], "name": "send post1 to stdout"},{"command":["echo", "post2"],"id":"foo"}]`,
 		}, PostAnnotation)
 		assert.NoError(t, err)
 
 		expected := Commands{
-			{ID: "", Command: []string{"echo", "post1"}, hookType: postConnectHookType, Description: "send post1 to stdout"},
-			{ID: "foo", Command: []string{"echo", "post2"}, hookType: postConnectHookType},
+			{ID: "", Command: []string{"echo", "post1"}, Name: "send post1 to stdout"},
+			{ID: "foo", Command: []string{"echo", "post2"}},
 		}
 		assert.Equal(t, expected, commands)
 	})
