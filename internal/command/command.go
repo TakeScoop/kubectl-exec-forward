@@ -19,7 +19,6 @@ type commandInput struct {
 	ID          string   `json:"id"`
 	Command     []string `json:"command"`
 	Interactive bool     `json:"interactive"`
-	Name        string   `json:"name"`
 	Description string   `json:"description"`
 }
 
