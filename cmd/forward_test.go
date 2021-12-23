@@ -105,6 +105,7 @@ func TestRunForwardCommand(t *testing.T) {
 		"--namespace",
 		pod.Namespace,
 		"--verbose",
+		"--persist",
 		fmt.Sprintf("pod/%s", pod.Name),
 		fmt.Sprintf("%d:%d", localPort, pod.Spec.Containers[0].Ports[0].ContainerPort),
 	})

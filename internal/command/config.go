@@ -5,4 +5,5 @@ type Config struct {
 	LocalPort int
 	Verbose   bool
 	Command   []string
+	Persist   bool
 }
