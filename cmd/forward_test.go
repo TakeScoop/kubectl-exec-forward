@@ -1,12 +1,12 @@
 package cmd
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -44,6 +44,31 @@ func TestParseArgs(t *testing.T) {
 		_, err := parseArgs([]string{"foo bar"})
 		assert.Error(t, err)
 	})
+}
+
+type SafeBuffer struct {
+	mutex sync.RWMutex
+	buf   []byte
+}
+
+func (b *SafeBuffer) Write(bs []byte) (int, error) {
+	if len(bs) == 0 {
+		return 0, nil
+	}
+
+	b.mutex.Lock()
+	b.buf = append(b.buf, bs...)
+	b.mutex.Unlock()
+
+	return len(bs), nil
+}
+
+func (b *SafeBuffer) String() string {
+	b.mutex.Lock()
+	s := string(b.buf)
+	b.mutex.Unlock()
+
+	return s
 }
 
 func TestRunForwardCommand(t *testing.T) {
@@ -91,8 +116,8 @@ func TestRunForwardCommand(t *testing.T) {
 
 	waitForPod(ctx, t, clientset, pod)
 
-	out := new(bytes.Buffer)
-	outErr := new(bytes.Buffer)
+	out := &SafeBuffer{}
+	outErr := &SafeBuffer{}
 
 	cmd := newForwardCommand(&genericclioptions.IOStreams{
 		Out:    out,
