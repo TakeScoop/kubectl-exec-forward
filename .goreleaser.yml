@@ -4,7 +4,7 @@ builds:
 brews:
   - tap:
       owner: takescoop
-      name: kubectl-exec-forward
+      name: homebrew-kubectl-exec-forward
     folder: HomebrewFormula
     homepage: https://github.com/takescoop/kubectl-exec-forward
     description: A kubectl plugin to run exec hooks exposed by a Kubernetes pod around a port-forward action.
