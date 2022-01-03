@@ -147,7 +147,7 @@ func (c Command) execute(ctx context.Context, config *Config, args *Args, previo
 		return nil, err
 	}
 
-	if c.ID != "" {
+	if c.ID != "" || !c.Interactive {
 		outputs[c.ID] = Output{
 			Stdout: outBuff.String(),
 			Stderr: errBuff.String(),
