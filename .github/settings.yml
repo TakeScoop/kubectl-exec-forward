@@ -5,8 +5,3 @@ repository:
   topics: kubernetes, kubectl
   allow_auto_merge: true
   private: false
-branches:
-  - name: master
-    protection:
-      required_pull_request_reviews: null
-      required_status_checks: null
