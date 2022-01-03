@@ -19,8 +19,8 @@ jobs:
         id: token
         uses: tibdex/github-app-token@v1
         with:
-          app_id: ${{ secrets.APP_ID }}
-          private_key: ${{ secrets.PRIVATE_KEY }}
+          app_id: ${{ secrets.HOMEBREW_APP_ID }}
+          private_key: ${{ secrets.HOMEBREW_PRIVATE_KEY }}
           repository: takescoop/homebrew-formulas
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v2
