@@ -115,39 +115,39 @@ func (c Command) execute(ctx context.Context, config *Config, args *Args, previo
 
 	fmt.Fprintf(streams.ErrOut, "> %s", cmdStr)
 
-	outBuff := new(bytes.Buffer)
-	errBuff := new(bytes.Buffer)
-
 	if c.Interactive {
 		cmd.Stdout = streams.Out
 		cmd.Stderr = streams.ErrOut
 		cmd.Stdin = streams.In
-	} else {
-		ows := []io.Writer{outBuff}
-		ews := []io.Writer{errBuff}
 
-		if config.Verbose {
-			ows = append(ows, streams.Out)
-			ews = append(ews, streams.ErrOut)
-		}
-
-		cmd.Stdout = io.MultiWriter(ows...)
-		cmd.Stderr = io.MultiWriter(ews...)
+		return outputs, cmd.Run()
 	}
+
+	outBuff := new(bytes.Buffer)
+	errBuff := new(bytes.Buffer)
+
+	ows := []io.Writer{outBuff}
+	ews := []io.Writer{errBuff}
+
+	if config.Verbose {
+		ows = append(ows, streams.Out)
+		ews = append(ews, streams.ErrOut)
+	}
+
+	cmd.Stdout = io.MultiWriter(ows...)
+	cmd.Stderr = io.MultiWriter(ews...)
 
 	if err := cmd.Run(); err != nil {
 		name, args, _ := c.render(config, args, outputs, false)
 
-		if !c.Interactive {
-			errStr := fmt.Sprintf("Error running command: %v\n%s\n", append([]string{name}, args...), errBuff)
+		errStr := fmt.Sprintf("Error running command: %v\n%s\n", append([]string{name}, args...), errBuff)
 
-			fmt.Fprint(streams.ErrOut, chalk.Red.Color(errStr))
-		}
+		fmt.Fprint(streams.ErrOut, chalk.Red.Color(errStr))
 
 		return nil, err
 	}
 
-	if c.ID != "" || !c.Interactive {
+	if c.ID != "" {
 		outputs[c.ID] = Output{
 			Stdout: outBuff.String(),
 			Stderr: errBuff.String(),
