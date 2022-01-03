@@ -78,10 +78,12 @@ func newForwardCommand(streams *genericclioptions.IOStreams, version string) *co
 		},
 	}
 
-	cmd.Flags().StringArray("arg", []string{}, "key=value arguments to be passed to commands")
-	cmd.Flags().Bool("verbose", false, "Whether to write command outputs to console")
-	cmd.Flags().Duration("pod-timeout", 500, "Time to wait for an attachable pod to become available")
-	cmd.Flags().Bool("persist", false, "Whether to persist the connection after the main command has finished")
+	flags := cmd.Flags()
+
+	flags.StringArrayP("arg", "a", []string{}, "key=value arguments to be passed to commands")
+	flags.BoolP("verbose", "v", false, "Whether to write command outputs to console")
+	flags.DurationP("pod-timeout", "t", 500, "Time to wait for an attachable pod to become available")
+	flags.BoolP("persist", "p", false, "Whether to persist the connection after the main command has finished")
 
 	clientcmd.BindOverrideFlags(&overrides, cmd.PersistentFlags(), clientcmd.RecommendedConfigOverrideFlags(""))
 
