@@ -5,6 +5,6 @@ A kubectl plugin to run exec hooks exposed by a Kubernetes pod around a port-for
 ## Install
 
 ```sh
-brew tap takescoop/kubectl-exec-forward https://github.com/takescoop/kubectl-exec-forward.git
+brew tap takescoop/kubectl-exec-forward
 brew install kubectl-exec-forward
 ```
