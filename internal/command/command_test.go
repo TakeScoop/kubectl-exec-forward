@@ -35,7 +35,7 @@ func TestToCmd(t *testing.T) {
 	t.Run("templates config inputs into the command", func(t *testing.T) {
 		c := &Command{
 			ID:      "foo",
-			Command: []string{"echo", "{{.Config.LocalPort}}", "{{.Config.Verbose}}"},
+			Command: []string{"echo", "{{.LocalPort}}"},
 		}
 
 		cmd, err := c.toCmd(context.Background(), &Config{
@@ -44,7 +44,7 @@ func TestToCmd(t *testing.T) {
 		}, &Args{}, map[string]Output{})
 		assert.NoError(t, err)
 
-		assert.Equal(t, []string{"echo", "5678", "true"}, cmd.Args)
+		assert.Equal(t, []string{"echo", "5678"}, cmd.Args)
 	})
 
 	t.Run("templates argument inputs into the command", func(t *testing.T) {
