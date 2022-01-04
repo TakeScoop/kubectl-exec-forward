@@ -33,7 +33,7 @@ Administrators can store complex behavior in Kubernetes pod annotations, allowin
 
 | Name | Description | 
 |---|---|
-| `exec-forward.pod.kubernetes.io/args` | Arguments passed to commands for rendering, can be overridden from the CLI via `--arg|-a` |
+| `exec-forward.pod.kubernetes.io/args` | Arguments passed to commands for rendering, can be overridden from the CLI via `--arg\|-a` |
 | `exec-forward.pod.kubernetes.io/pre-connect` | A JSON formatted list of commands executed before establishing a port-forwarding connection |
 | `exec-forward.pod.kubernetes.io/post-connect` | A JSON formatted list of commands executed after establishing a port-forwarding connection |
 | `exec-forward.pod.kubernetes.io/command` | A single JSON formatted command ran after `post-connect` |
@@ -45,7 +45,7 @@ Administrators can store complex behavior in Kubernetes pod annotations, allowin
 The command object represents an exec command and associated configuration to be executed by the plugin during the port-forwarding lifecycle.
 
 | Attribute | Description | Optional |
-| --- | --- |
+| --- | --- | --- |
 | `id` | A unique identifier that can be used in subsequent commands to reference a previous command's output | `true` |
 | `command` | The command to run as an array of strings | `false` |
 | `interactive` | Whether the command should be run in interactive mode. Default is `false`. Note: the main `command` is always run in interactive mode | `true` |
@@ -57,7 +57,7 @@ Exec commands are [Go templated](https://pkg.go.dev/text/template) using inputs 
 
 | Namespace | Description | Example |
 |---|---|---|
-| `.Args` | Arguments read from the `args` annotation and overridden using the `--arg|-a` CLI flags | `{{.Args.username}}` |
+| `.Args` | Arguments read from the `args` annotation and overridden using the `--arg\|-a` CLI flags | `{{.Args.username}}` |
 | `.Outputs` | Stdout and Stderr from previously ran commands, stored by command `id` | `{{.Outputs.foo.Stdout}}` |
 | `.Config` | Port-forwarding configuration | `{{.Config.LocalPort }}` |
 
