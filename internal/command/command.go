@@ -60,13 +60,13 @@ func (c Command) render(config *Config, cmdArgs *Args, outputs map[string]Output
 			return "", nil, err
 		}
 
-		o := new(bytes.Buffer)
-
 		outMap := map[string]string{}
 
 		for id, output := range outputs {
 			outMap[id] = output.Stdout
 		}
+
+		o := new(bytes.Buffer)
 
 		if err := tpl.Execute(o, &templateInputs{
 			LocalPort: config.LocalPort,
