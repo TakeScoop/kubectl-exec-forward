@@ -27,7 +27,7 @@ In addition to the standard kubectl flags, the following flags are available for
 
 ## Administration
 
-Administrators can store complex behavior in Kubernetes pod annotations, allowing users to run a single `kubectl` to interact with remote resources.
+Administrators can store complex behavior in Kubernetes pod annotations, allowing users to run a single `kubectl` command to interact with remote resources.
 
 ### Lifecycle
 
@@ -56,12 +56,12 @@ The command object represents an exec command and associated configuration to be
 | --- | --- | --- |
 | `id` | A unique identifier that can be used in subsequent commands to reference a previous command's output | `true` |
 | `command` | The command to run as an array of strings | `false` |
-| `interactive` | Whether the command should be run in interactive mode. Default is `false`. Note: the main `command` is always run in interactive mode | `true` |
+| `interactive` | Whether the command should be run in interactive mode and can receive user input. Default is `false`. Note: the main `command` is always run in interactive mode | `true` |
 | `name` | The display name for the command, shown during execution | `false` |
 
 ##### Rendering
 
-Exec commands are [Go templated](https://pkg.go.dev/text/template) using inputs from the CLI, the `args` annotation, configuration from the port-forwarding connection and previous command outputs.
+Exec commands are rendered via [Go templates](https://pkg.go.dev/text/template) using inputs from the CLI, the `args` annotation, configuration from the port-forwarding connection and previous command outputs.
 
 | Namespace | Description | Example |
 |---|---|---|
