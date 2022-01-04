@@ -66,8 +66,8 @@ Exec commands are rendered via [Go templates](https://pkg.go.dev/text/template) 
 | Namespace | Description | Example |
 |---|---|---|
 | `.Args` | Arguments read from the `args` annotation and overridden using the `--arg\|-a` CLI flags | `{{.Args.username}}` |
-| `.Outputs` | Stdout and Stderr from previously ran commands, stored by command `id` | `{{.Outputs.foo.Stdout}}` |
-| `.Config` | Port-forwarding configuration | `{{.Config.LocalPort }}` |
+| `.Outputs` | Stdout from previously ran commands, stored by command `id` | `{{.Outputs.foo}}` |
+| `.LocalPort` | The local port where the forwarding connection is opened | `{{.LocalPort }}` |
 
 ##### Template functions
 
