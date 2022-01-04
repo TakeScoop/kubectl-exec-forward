@@ -52,12 +52,12 @@ Administrators can store complex behavior in Kubernetes pod annotations, allowin
 
 The command object represents an exec command and associated configuration to be executed by the plugin during the port-forwarding lifecycle.
 
-| Attribute | Description | Optional |
+| Attribute | Description | Required | Default | 
 | --- | --- | --- |
-| `id` | A unique identifier that can be used in subsequent commands to reference a previous command's output | `true` |
-| `command` | The command to run as an array of strings | `false` |
-| `interactive` | Whether the command should be run in interactive mode and can receive user input. Default is `false`. Note: the main `command` is always run in interactive mode | `true` |
-| `name` | The display name for the command, shown during execution | `false` |
+| `id` | A unique identifier that can be used in subsequent commands to reference a previous command's output | `false` | `""` | 
+| `command` | The command to run as an array of strings | `true` | |
+| `interactive` | Whether the command should be run in interactive mode and can receive user input. Default is `false`. Note: the main `command` is always run in interactive mode | `false` | `false` |
+| `name` | The display name for the command, shown during execution | `false` | `""` |
 
 ##### Rendering
 
@@ -80,7 +80,7 @@ In addition to the following, all standard Go templating functions are available
 
 ## Examples
 
-Connect to an AWS RDS database using a generated password
+Connect to an AWS RDS database using a generated password. `socat` is used to forward connections from the pod to the remote RDS database.
 
 ```yaml
 kind: Pod
@@ -166,5 +166,5 @@ spec:
 ```
 
 ```sh
-kubectl port-forward deployment/foo http
+kubectl exec-forward deployment/foo http
 ```
