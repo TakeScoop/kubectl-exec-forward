@@ -53,23 +53,15 @@ type SafeBuffer struct {
 }
 
 func (b *SafeBuffer) Write(bs []byte) (int, error) {
-	if len(bs) == 0 {
-		return 0, nil
-	}
-
 	b.mutex.Lock()
-	b.buf.Write(bs)
-	b.mutex.Unlock()
-
-	return len(bs), nil
+	defer b.mutex.Unlock()
+	return b.buf.Write(bs)
 }
 
 func (b *SafeBuffer) String() string {
 	b.mutex.Lock()
-	s := b.buf.String()
-	b.mutex.Unlock()
-
-	return s
+	defer b.mutex.Unlock()
+	return b.buf.String()
 }
 
 func TestRunForwardCommand(t *testing.T) {
