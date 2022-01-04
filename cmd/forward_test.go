@@ -55,12 +55,14 @@ type SafeBuffer struct {
 func (b *SafeBuffer) Write(bs []byte) (int, error) {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
+
 	return b.buf.Write(bs)
 }
 
 func (b *SafeBuffer) String() string {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
+
 	return b.buf.String()
 }
 
