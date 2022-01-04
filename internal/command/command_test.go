@@ -62,7 +62,7 @@ func TestToCmd(t *testing.T) {
 	t.Run("templates outputs inputs into the command", func(t *testing.T) {
 		c := &Command{
 			ID:      "foo",
-			Command: []string{"echo", "{{.Outputs.foo.Stdout}}"},
+			Command: []string{"echo", "{{.Outputs.foo}}"},
 		}
 
 		cmd, err := c.toCmd(context.Background(), &Config{}, &Args{}, map[string]Output{
