@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -44,6 +45,25 @@ func TestParseArgs(t *testing.T) {
 		_, err := parseArgs([]string{"foo bar"})
 		assert.Error(t, err)
 	})
+}
+
+type SafeBuffer struct {
+	mutex sync.RWMutex
+	buf   bytes.Buffer
+}
+
+func (b *SafeBuffer) Write(bs []byte) (int, error) {
+	b.mutex.Lock()
+	defer b.mutex.Unlock()
+
+	return b.buf.Write(bs)
+}
+
+func (b *SafeBuffer) String() string {
+	b.mutex.Lock()
+	defer b.mutex.Unlock()
+
+	return b.buf.String()
 }
 
 func TestRunForwardCommand(t *testing.T) {
@@ -91,8 +111,8 @@ func TestRunForwardCommand(t *testing.T) {
 
 	waitForPod(ctx, t, clientset, pod)
 
-	out := new(bytes.Buffer)
-	outErr := new(bytes.Buffer)
+	out := &SafeBuffer{}
+	outErr := &SafeBuffer{}
 
 	cmd := newForwardCommand(&genericclioptions.IOStreams{
 		Out:    out,

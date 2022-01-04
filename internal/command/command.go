@@ -76,8 +76,8 @@ func (c Command) render(config *Config, cmdArgs *Args, outputs map[string]Output
 	return name, args, nil
 }
 
-// ToString returns the command as a human readable string.
-func (c Command) ToString(config *Config, cmdArgs *Args, outputs map[string]Output) (string, error) {
+// Display returns the command as a human readable string.
+func (c Command) Display(config *Config, cmdArgs *Args, outputs map[string]Output) (string, error) {
 	str := []string{}
 
 	if c.Name != "" {
@@ -108,26 +108,30 @@ func (c Command) execute(ctx context.Context, config *Config, args *Args, previo
 		return nil, err
 	}
 
-	cmdStr, err := c.ToString(config, args, outputs)
+	cmdStr, err := c.Display(config, args, outputs)
 	if err != nil {
 		return nil, err
 	}
 
 	fmt.Fprintf(streams.ErrOut, "> %s", cmdStr)
 
-	bout := new(bytes.Buffer)
-	berr := new(bytes.Buffer)
+	if c.Interactive {
+		cmd.Stdout = streams.Out
+		cmd.Stderr = streams.ErrOut
+		cmd.Stdin = streams.In
 
-	ows := []io.Writer{bout}
-	ews := []io.Writer{berr}
-
-	if c.Interactive || config.Verbose {
-		ows = append(ows, streams.Out)
-		ews = append(ews, streams.ErrOut)
+		return outputs, cmd.Run()
 	}
 
-	if c.Interactive {
-		cmd.Stdin = streams.In
+	outBuff := new(bytes.Buffer)
+	errBuff := new(bytes.Buffer)
+
+	ows := []io.Writer{outBuff}
+	ews := []io.Writer{errBuff}
+
+	if config.Verbose {
+		ows = append(ows, streams.Out)
+		ews = append(ews, streams.ErrOut)
 	}
 
 	cmd.Stdout = io.MultiWriter(ows...)
@@ -136,7 +140,7 @@ func (c Command) execute(ctx context.Context, config *Config, args *Args, previo
 	if err := cmd.Run(); err != nil {
 		name, args, _ := c.render(config, args, outputs, false)
 
-		errStr := fmt.Sprintf("Error running command: %v\n%s\n", append([]string{name}, args...), berr)
+		errStr := fmt.Sprintf("Error running command: %v\n%s\n", append([]string{name}, args...), errBuff)
 
 		fmt.Fprint(streams.ErrOut, chalk.Red.Color(errStr))
 
@@ -145,8 +149,8 @@ func (c Command) execute(ctx context.Context, config *Config, args *Args, previo
 
 	if c.ID != "" {
 		outputs[c.ID] = Output{
-			Stdout: bout.String(),
-			Stderr: berr.String(),
+			Stdout: outBuff.String(),
+			Stderr: errBuff.String(),
 		}
 	}
 
