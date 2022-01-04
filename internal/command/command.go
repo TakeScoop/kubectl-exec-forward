@@ -30,7 +30,7 @@ type templateInputs struct {
 }
 
 // toCmd returns a golang cmd object from the calling command.
-func (c Command) toCmd(ctx context.Context, config *Config, cmdArgs *Args, outputs map[string]Output) (*exec.Cmd, error) {
+func (c Command) toCmd(ctx context.Context, config *Config, cmdArgs *Args, outputs Outputs) (*exec.Cmd, error) {
 	name, args, err := c.render(config, cmdArgs, outputs, true)
 	if err != nil {
 		return nil, err
@@ -40,7 +40,7 @@ func (c Command) toCmd(ctx context.Context, config *Config, cmdArgs *Args, outpu
 	return exec.CommandContext(ctx, name, args...), nil
 }
 
-func (c Command) render(config *Config, cmdArgs *Args, outputs map[string]Output, showSensitive bool) (name string, args []string, err error) {
+func (c Command) render(config *Config, cmdArgs *Args, outputs Outputs, showSensitive bool) (name string, args []string, err error) {
 	name = c.Command[0]
 	rawArgs := []string{}
 
@@ -60,18 +60,12 @@ func (c Command) render(config *Config, cmdArgs *Args, outputs map[string]Output
 			return "", nil, err
 		}
 
-		outMap := map[string]string{}
-
-		for id, output := range outputs {
-			outMap[id] = output.Stdout
-		}
-
 		o := new(bytes.Buffer)
 
 		if err := tpl.Execute(o, &templateInputs{
 			LocalPort: config.LocalPort,
 			Args:      cmdArgs,
-			Outputs:   outMap,
+			Outputs:   outputs.Stdout(),
 		}); err != nil {
 			return "", nil, err
 		}
@@ -83,7 +77,7 @@ func (c Command) render(config *Config, cmdArgs *Args, outputs map[string]Output
 }
 
 // Display returns the command as a human readable string.
-func (c Command) Display(config *Config, cmdArgs *Args, outputs map[string]Output) (string, error) {
+func (c Command) Display(config *Config, cmdArgs *Args, outputs Outputs) (string, error) {
 	str := []string{}
 
 	if c.Name != "" {
@@ -102,8 +96,8 @@ func (c Command) Display(config *Config, cmdArgs *Args, outputs map[string]Outpu
 }
 
 // execute runs the command with the given config and outputs.
-func (c Command) execute(ctx context.Context, config *Config, args *Args, previousOutputs map[string]Output, streams *genericclioptions.IOStreams) (map[string]Output, error) {
-	outputs := map[string]Output{}
+func (c Command) execute(ctx context.Context, config *Config, args *Args, previousOutputs Outputs, streams *genericclioptions.IOStreams) (Outputs, error) {
+	outputs := Outputs{}
 
 	for k, v := range previousOutputs {
 		outputs[k] = v

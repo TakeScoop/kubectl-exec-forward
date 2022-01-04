@@ -42,7 +42,7 @@ func Run(ctx context.Context, client *forwarder.Client, hooksConfig *Config, cli
 		return err
 	}
 
-	outputs := map[string]Output{}
+	outputs := Outputs{}
 
 	if outputs, err = hooks.Pre.execute(ctx, hooksConfig, args, outputs, streams); err != nil {
 		return err
