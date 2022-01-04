@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"net/http"
@@ -48,7 +49,7 @@ func TestParseArgs(t *testing.T) {
 
 type SafeBuffer struct {
 	mutex sync.RWMutex
-	buf   []byte
+	buf   bytes.Buffer
 }
 
 func (b *SafeBuffer) Write(bs []byte) (int, error) {
@@ -57,7 +58,7 @@ func (b *SafeBuffer) Write(bs []byte) (int, error) {
 	}
 
 	b.mutex.Lock()
-	b.buf = append(b.buf, bs...)
+	b.buf.Write(bs)
 	b.mutex.Unlock()
 
 	return len(bs), nil
@@ -65,7 +66,7 @@ func (b *SafeBuffer) Write(bs []byte) (int, error) {
 
 func (b *SafeBuffer) String() string {
 	b.mutex.Lock()
-	s := string(b.buf)
+	s := b.buf.String()
 	b.mutex.Unlock()
 
 	return s
