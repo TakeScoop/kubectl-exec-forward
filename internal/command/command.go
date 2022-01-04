@@ -24,9 +24,9 @@ type Command struct {
 }
 
 type templateInputs struct {
-	Config  *Config
-	Args    *Args
-	Outputs map[string]string
+	LocalPort int
+	Args      *Args
+	Outputs   map[string]string
 }
 
 // toCmd returns a golang cmd object from the calling command.
@@ -69,9 +69,9 @@ func (c Command) render(config *Config, cmdArgs *Args, outputs map[string]Output
 		}
 
 		if err := tpl.Execute(o, &templateInputs{
-			Config:  config,
-			Args:    cmdArgs,
-			Outputs: outMap,
+			LocalPort: config.LocalPort,
+			Args:      cmdArgs,
+			Outputs:   outMap,
 		}); err != nil {
 			return "", nil, err
 		}
