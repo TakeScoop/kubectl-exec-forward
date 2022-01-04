@@ -29,6 +29,14 @@ In addition to the standard kubectl flags, the following flags are available for
 
 Administrators can store complex behavior in Kubernetes pod annotations, allowing users to run a single `kubectl` to interact with remote resources.
 
+### Lifecycle
+
+| Name | Description | 
+|---|---|
+| `pre-connect` | Run before establishing a port-forwarding connection |
+| `post-connect` | Run after establishing a port-forwarding connection |
+| `command` | The main command, run after `post-connect`. When `command` finishes, the port-forwarding connection is closed | 
+
 ### Annotations
 
 | Name | Description | 
@@ -69,14 +77,6 @@ In addition to the following, all standard Go templating functions are available
 | --- | --- |
 | `sensitive` | Replaces the passed value with `********` when printing to console |
 | `trim` | Removes white space from the beginning and end of a string, useful when piping to other template functions |
-
-### Lifecycle
-
-| Name | Description | 
-|---|---|
-| `pre-connect` | Run before establishing a port-forwarding connection |
-| `post-connect` | Run after establishing a port-forwarding connection |
-| `command` | The main command, run after `post-connect`. When `command` finishes, the port-forwarding connection is closed | 
 
 ## Examples
 
@@ -126,7 +126,7 @@ spec:
 kubectl exec-forward pod/db postgres
 ```
 
-Request data through a forwarded connection using a token generated in the pre-connect hook
+Request data through a forwarded connection using a token generated
 
 ```yaml
 kind: Deployment
