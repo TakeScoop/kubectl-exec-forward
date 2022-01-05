@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/phayes/freeport"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/kubectl/pkg/util"
@@ -17,17 +16,6 @@ import (
 
 // Translates the passed runtime object port mappings into ports that target the passed pod.
 func (c Client) translatePorts(obj runtime.Object, pod *corev1.Pod, port string) (string, error) {
-	local, remote := splitPort(port)
-
-	if local == "0" {
-		newLocal, err := freeport.GetFreePort()
-		if err != nil {
-			return "", err
-		}
-
-		port = fmt.Sprintf("%d:%s", newLocal, remote)
-	}
-
 	switch t := obj.(type) {
 	case *corev1.Service:
 		return translateServicePortToTargetPort(port, *t, *pod)

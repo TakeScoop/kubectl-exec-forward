@@ -51,13 +51,15 @@ func Run(ctx context.Context, client *forwarder.Client, hooksConfig *Config, cli
 	hookErrChan := make(chan error)
 	fwdErrChan := make(chan error)
 	stopChan := make(chan struct{})
-	readyChan := make(chan struct{})
+	readyChan := make(chan forwarder.Connection)
 	commandDoneChan := make(chan bool)
 
 	cancelCtx, cancel := context.WithCancel(ctx)
 
 	go func() {
-		<-readyChan
+		conn := <-readyChan
+
+		hooksConfig.LocalPort = conn.Local
 
 		if outputs, err = hooks.Post.execute(cancelCtx, hooksConfig, args, outputs, streams); err != nil {
 			hookErrChan <- err
