@@ -25,7 +25,6 @@ In addition to the standard kubectl flags, the following flags are available for
 | `--pod-timeout` | `-t` | Time to wait for an attachable pod to become available | `500` (ms) |
 | `--persist` | `-p` | Whether to persist the forwarding connection after the main command has finished | `false` |
 
-
 ### Command
 
 The main command can be customized by passing additional arguments to the CLI. The arguments for the original command are supplied to the passed override.
@@ -62,7 +61,7 @@ Administrators can store complex behavior in Kubernetes pod annotations, allowin
 The command object represents an exec command and associated configuration to be executed by the plugin during the port-forwarding lifecycle.
 
 | Attribute | Description | Required | Default | 
-| --- | --- | --- |
+| --- | --- | --- | --- |
 | `id` | A unique identifier that can be used in subsequent commands to reference a previous command's output | `false` | `""` | 
 | `command` | The command to run as an array of strings | `true` | |
 | `interactive` | Whether the command should be run in interactive mode and can receive user input. Default is `false`. Note: the main `command` is always run in interactive mode | `false` | `false` |
