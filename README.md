@@ -28,21 +28,10 @@ In addition to the standard kubectl flags, the following flags are available for
 
 ### Command
 
-The main command can be customized by passing additional arguments to the CLI. 
+The main command can be customized by passing additional arguments to the CLI. The arguments for the original command are supplied to the passed override.
 
 ```sh
 kubectl exec-forward type/name port -- psql -c 'select * from foo limit 1;'
-```
-
-The first annotated command argument is replaced by the passed CLI arguments.
-
-```sh
-# annotation
-... ["open", "postgres://user@localhost:5432/db"]
-# CLI
-kubectl exec-forward type/name port -- psql
-# result
-psql postgres://user@localhost:5432/db
 ```
 
 ## Administration
