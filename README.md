@@ -25,6 +25,15 @@ In addition to the standard kubectl flags, the following flags are available for
 | `--pod-timeout` | `-t` | Time to wait for an attachable pod to become available | `500` (ms) |
 | `--persist` | `-p` | Whether to persist the forwarding connection after the main command has finished | `false` |
 
+
+### Command
+
+The main command can be customized by passing additional arguments to the CLI. The arguments for the original command are supplied to the passed override.
+
+```sh
+kubectl exec-forward type/name port -- psql -c 'select * from foo limit 1;'
+```
+
 ## Administration
 
 Administrators can store complex behavior in Kubernetes pod annotations, allowing users to run a single `kubectl` command to interact with remote resources.
