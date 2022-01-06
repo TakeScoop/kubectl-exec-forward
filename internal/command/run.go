@@ -32,7 +32,7 @@ func Run(ctx context.Context, client *forwarder.Client, hooksConfig *Config, cli
 
 	hooksConfig.LocalPort = localPort
 
-	args, err := parseArgs(fwdConfig.Pod.Annotations, cliArgs)
+	args, err := ParseArgsFromAnnotations(fwdConfig.Pod.Annotations, cliArgs)
 	if err != nil {
 		return err
 	}

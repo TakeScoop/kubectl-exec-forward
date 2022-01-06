@@ -13,7 +13,7 @@ func TestParseArgs(t *testing.T) {
 			ArgsAnnotation: `{"username":"foo","schema":"https"}`,
 		}
 
-		args, err := parseArgs(annotations, map[string]string{})
+		args, err := ParseArgsFromAnnotations(annotations, map[string]string{})
 		assert.NoError(t, err)
 
 		expected := Args{
@@ -30,7 +30,7 @@ func TestParseArgs(t *testing.T) {
 			ArgsAnnotation: `{"username":"foo","schema":"https"}`,
 		}
 
-		args, err := parseArgs(annotations, map[string]string{
+		args, err := ParseArgsFromAnnotations(annotations, map[string]string{
 			"username": "bar",
 		})
 		assert.NoError(t, err)
@@ -44,7 +44,7 @@ func TestParseArgs(t *testing.T) {
 	})
 
 	t.Run("Add overrides with no args annotation", func(t *testing.T) {
-		args, err := parseArgs(map[string]string{}, map[string]string{
+		args, err := ParseArgsFromAnnotations(map[string]string{}, map[string]string{
 			"username": "bar",
 		})
 		assert.NoError(t, err)
