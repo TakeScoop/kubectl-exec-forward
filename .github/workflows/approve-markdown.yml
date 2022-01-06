@@ -1,0 +1,27 @@
+name: Approve Markdown Changes
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - '**.md'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  approve:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Fetch Base Ref
+        run: git fetch --no-tags --prune --depth=1 origin +refs/heads/${{ github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}
+      - id: diff
+        name: Git Diff
+        continue-on-error: true
+        run: git diff --exit-code origin/${{ github.base_ref }} ':!**.md'
+      - uses: hmarr/auto-approve-action@v2
+        if: ${{ steps.diff.outcome == 'success' }}
+        with:
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
