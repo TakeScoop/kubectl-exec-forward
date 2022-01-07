@@ -5,95 +5,67 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCommandToCmd(t *testing.T) {
-	t.Run("returns a cmd with no arguments", func(t *testing.T) {
-		c := &Command{
-			ID:      "foo",
-			Command: []string{"echo"},
-		}
+	cases := []struct {
+		name     string
+		command  Command
+		data     TemplateData
+		expected []string
+		error    bool
+	}{
+		{
+			name:     "no arguments",
+			command:  Command{Command: []string{"echo"}},
+			expected: []string{"echo"},
+		},
+		{
+			name:     "with arguments",
+			command:  Command{Command: []string{"echo", "hello", "world"}},
+			expected: []string{"echo", "hello", "world"},
+		},
+		{
+			name:     "with template",
+			command:  Command{Command: []string{"echo", "{{.LocalPort}}"}},
+			data:     TemplateData{LocalPort: 5678},
+			expected: []string{"echo", "5678"},
+		},
+		{
+			name:     "with Arg template",
+			command:  Command{Command: []string{"echo", "{{.Args.foo}}"}},
+			data:     TemplateData{Args: Args{"foo": "bar"}},
+			expected: []string{"echo", "bar"},
+		},
+		{
+			name:     "with Outputs template",
+			command:  Command{Command: []string{"echo", "{{.Outputs.foo}}"}},
+			data:     TemplateData{Outputs: map[string]string{"foo": "hello world"}},
+			expected: []string{"echo", "hello world"},
+		},
+		{
+			name:    "with invalid template",
+			command: Command{Command: []string{"echo", "{{.Invalid}}"}},
+			error:   true,
+		},
+	}
 
-		cmd, err := c.ToCmd(context.Background(), TemplateData{})
-		assert.NoError(t, err)
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
-		assert.Equal(t, []string{"echo"}, cmd.Args)
-	})
+			cmd, err := tc.command.ToCmd(context.Background(), tc.data)
 
-	t.Run("returns a cmd with arguments", func(t *testing.T) {
-		c := &Command{
-			ID:      "foo",
-			Command: []string{"echo", "hello", "world"},
-		}
+			if tc.error {
+				assert.Error(t, err)
 
-		cmd, err := c.ToCmd(context.Background(), TemplateData{})
-		assert.NoError(t, err)
+				return
+			}
 
-		assert.Equal(t, []string{"echo", "hello", "world"}, cmd.Args)
-	})
-
-	t.Run("templates config inputs into the command", func(t *testing.T) {
-		c := &Command{
-			ID:      "foo",
-			Command: []string{"echo", "{{.LocalPort}}"},
-		}
-
-		cmd, err := c.ToCmd(context.Background(), TemplateData{
-			LocalPort: 5678,
+			require.NoError(t, err)
+			assert.Equal(t, tc.expected, cmd.Args)
 		})
-		assert.NoError(t, err)
-
-		assert.Equal(t, []string{"echo", "5678"}, cmd.Args)
-	})
-
-	t.Run("templates argument inputs into the command", func(t *testing.T) {
-		c := &Command{
-			ID:      "foo",
-			Command: []string{"echo", "{{.Args.foo}}"},
-		}
-
-		cmd, err := c.ToCmd(context.Background(), TemplateData{
-			Args: Args{"foo": "bar"},
-		})
-		assert.NoError(t, err)
-
-		assert.Equal(t, []string{"echo", "bar"}, cmd.Args)
-	})
-
-	t.Run("templates outputs inputs into the command", func(t *testing.T) {
-		c := &Command{
-			ID:      "foo",
-			Command: []string{"echo", "{{.Outputs.foo}}"},
-		}
-
-		cmd, err := c.ToCmd(context.Background(), TemplateData{
-			Outputs: map[string]string{
-				"foo": "hello world",
-			},
-		})
-		assert.NoError(t, err)
-
-		assert.Equal(t, []string{"echo", "hello world"}, cmd.Args)
-	})
-
-	t.Run("error if a template cannot be satisfied with the supplied inputs", func(t *testing.T) {
-		c := &Command{
-			ID:      "foo",
-			Command: []string{"echo", "{{.DoesNotExist}}"},
-		}
-
-		_, err := c.ToCmd(context.Background(), TemplateData{})
-		assert.Error(t, err)
-	})
-
-	t.Run("run a command without an ID field", func(t *testing.T) {
-		c := &Command{
-			Command: []string{"echo", "foo"},
-		}
-
-		cmd, err := c.ToCmd(context.Background(), TemplateData{})
-		assert.NoError(t, err)
-
-		assert.Equal(t, []string{"echo", "foo"}, cmd.Args)
-	})
+	}
 }
