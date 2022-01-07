@@ -283,6 +283,7 @@ func TestCommandExecute(t *testing.T) {
 		expected Outputs
 		stdout   string
 		stderr   string
+		error    bool
 	}{
 		{
 			name:    "no id",
@@ -295,6 +296,11 @@ func TestCommandExecute(t *testing.T) {
 			stderr:   "> echo hello\n",
 			expected: Outputs{"foo": "hello\n"},
 		},
+		{
+			name:    "invalid",
+			command: Command{Command: []string{"echo", "{{.Invalid}}"}},
+			error:   true,
+		},
 	}
 
 	for _, tc := range cases {
@@ -304,6 +310,12 @@ func TestCommandExecute(t *testing.T) {
 
 			streams, _, stdout, stderr := genericclioptions.NewTestIOStreams()
 			outputs, err := tc.command.Execute(context.Background(), &tc.config, tc.args, tc.outputs, &streams)
+
+			if tc.error {
+				assert.Error(t, err)
+
+				return
+			}
 
 			require.NoError(t, err)
 

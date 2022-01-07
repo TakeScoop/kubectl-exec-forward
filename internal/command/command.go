@@ -117,11 +117,7 @@ func (c Command) Execute(ctx context.Context, config *Config, args Args, outputs
 		return nil, err
 	}
 
-	cmdStr, err := c.Display(data)
-	if err != nil {
-		return nil, err
-	}
-
+	cmdStr, _ := c.Display(data)
 	fmt.Fprintf(streams.ErrOut, "> %s\n", cmdStr)
 
 	if c.Interactive {
