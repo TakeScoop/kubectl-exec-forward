@@ -2,11 +2,14 @@ package command
 
 import (
 	"context"
+	"strings"
 	"testing"
 
+	"github.com/pborman/ansi"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/ttacon/chalk"
+	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
 func TestCommandToCmd(t *testing.T) {
@@ -263,6 +266,113 @@ func TestParseCommandFromAnnotations(t *testing.T) {
 
 			require.NoError(t, err)
 			assert.Equal(t, tc.expected, actual)
+		})
+	}
+}
+
+func TestCommandExecute(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name string
+
+		config  Config
+		args    Args
+		outputs Outputs
+		command Command
+		stdin   string
+
+		expected Outputs
+		stdout   string
+		stderr   string
+		error    bool
+	}{
+		{
+			name:    "no id",
+			command: Command{Command: []string{"echo", "hello"}},
+			stderr:  "> echo hello\n",
+		},
+		{
+			name:     "output",
+			command:  Command{ID: "foo", Command: []string{"echo", "hello"}},
+			stderr:   "> echo hello\n",
+			expected: Outputs{"foo": "hello\n"},
+		},
+		{
+			name:    "invalid",
+			command: Command{Command: []string{"echo", "{{.Invalid}}"}},
+			error:   true,
+		},
+		{
+			name:    "interactive",
+			command: Command{Command: []string{"cat"}, Interactive: true},
+			stdin:   "hello\n",
+			stderr:  "> cat\n",
+			stdout:  "hello\n",
+		},
+		{
+			name:     "verbose",
+			config:   Config{Verbose: true},
+			command:  Command{ID: "foo", Command: []string{"echo", "hello"}},
+			stderr:   "> echo hello\n",
+			stdout:   "hello\n",
+			expected: Outputs{"foo": "hello\n"},
+		},
+		{
+			name: "run with error",
+			command: Command{
+				DisplayName: "Exit with Error",
+				Command:     []string{"sh", "-c", "echo 'the error message' >&2 && exit 1"},
+			},
+			error: true,
+			stderr: strings.Join([]string{
+				"> Exit with Error: sh -c echo 'the error message' >&2 && exit 1",
+				"Error running command: [sh -c echo 'the error message' >&2 && exit 1]",
+				"the error message\n\n",
+			}, "\n"),
+			stdout: "",
+		},
+		{
+			name: "run with sensitive error",
+			command: Command{
+				DisplayName: "Exit with Error",
+				Command:     []string{"sh", "-c", `echo 'the error {{ "message" | sensitive }}' >&2 && exit 1`},
+			},
+			error: true,
+			stderr: strings.Join([]string{
+				"> Exit with Error: sh -c echo 'the error ********' >&2 && exit 1",
+				"Error running command: [sh -c echo 'the error ********' >&2 && exit 1]",
+				"the error message\n\n",
+			}, "\n"),
+			stdout: "",
+		},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			streams, stdin, stdout, stderr := genericclioptions.NewTestIOStreams()
+
+			if tc.stdin != "" {
+				stdin.Write([]byte(tc.stdin))
+			}
+
+			outputs, err := tc.command.Execute(context.Background(), &tc.config, tc.args, tc.outputs, &streams)
+
+			if tc.error {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+
+			plainStderr, err := ansi.Strip(stderr.Bytes())
+			require.NoError(t, err)
+
+			assert.Equal(t, tc.stderr, string(plainStderr))
+			assert.Equal(t, tc.stdout, stdout.String())
+			assert.Equal(t, tc.expected, outputs)
 		})
 	}
 }
