@@ -4,9 +4,11 @@ import (
 	"context"
 	"testing"
 
+	"github.com/pborman/ansi"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/ttacon/chalk"
+	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
 func TestCommandToCmd(t *testing.T) {
@@ -263,6 +265,54 @@ func TestParseCommandFromAnnotations(t *testing.T) {
 
 			require.NoError(t, err)
 			assert.Equal(t, tc.expected, actual)
+		})
+	}
+}
+
+func TestCommandExecute(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name string
+
+		config  Config
+		args    Args
+		outputs Outputs
+		command Command
+
+		expected Outputs
+		stdout   string
+		stderr   string
+	}{
+		{
+			name:    "no id",
+			command: Command{Command: []string{"echo", "hello"}},
+			stderr:  "> echo hello\n",
+		},
+		{
+			name:     "output",
+			command:  Command{ID: "foo", Command: []string{"echo", "hello"}},
+			stderr:   "> echo hello\n",
+			expected: Outputs{"foo": "hello\n"},
+		},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			streams, _, stdout, stderr := genericclioptions.NewTestIOStreams()
+			outputs, err := tc.command.Execute(context.Background(), &tc.config, tc.args, tc.outputs, &streams)
+
+			require.NoError(t, err)
+
+			plainStderr, err := ansi.Strip(stderr.Bytes())
+			require.NoError(t, err)
+
+			assert.Equal(t, tc.stderr, string(plainStderr))
+			assert.Equal(t, tc.stdout, stdout.String())
+			assert.Equal(t, tc.expected, outputs)
 		})
 	}
 }
