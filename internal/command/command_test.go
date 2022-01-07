@@ -2,6 +2,7 @@ package command
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/pborman/ansi"
@@ -317,6 +318,34 @@ func TestCommandExecute(t *testing.T) {
 			stdout:   "hello\n",
 			expected: Outputs{"foo": "hello\n"},
 		},
+		{
+			name: "run with error",
+			command: Command{
+				DisplayName: "Exit with Error",
+				Command:     []string{"sh", "-c", "echo 'the error message' >&2 && exit 1"},
+			},
+			error: true,
+			stderr: strings.Join([]string{
+				"> Exit with Error: sh -c echo 'the error message' >&2 && exit 1",
+				"Error running command: [sh -c echo 'the error message' >&2 && exit 1]",
+				"the error message\n\n",
+			}, "\n"),
+			stdout: "",
+		},
+		{
+			name: "run with sensitive error",
+			command: Command{
+				DisplayName: "Exit with Error",
+				Command:     []string{"sh", "-c", `echo 'the error {{ "message" | sensitive }}' >&2 && exit 1`},
+			},
+			error: true,
+			stderr: strings.Join([]string{
+				"> Exit with Error: sh -c echo 'the error ********' >&2 && exit 1",
+				"Error running command: [sh -c echo 'the error ********' >&2 && exit 1]",
+				"the error message\n\n",
+			}, "\n"),
+			stdout: "",
+		},
 	}
 
 	for _, tc := range cases {
@@ -334,11 +363,9 @@ func TestCommandExecute(t *testing.T) {
 
 			if tc.error {
 				assert.Error(t, err)
-
-				return
+			} else {
+				assert.NoError(t, err)
 			}
-
-			require.NoError(t, err)
 
 			plainStderr, err := ansi.Strip(stderr.Bytes())
 			require.NoError(t, err)
