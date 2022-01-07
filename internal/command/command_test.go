@@ -131,6 +131,91 @@ func TestCommandDisplay(t *testing.T) {
 	}
 }
 
+func TestCommandArgs(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name     string
+		command  Command
+		data     TemplateData
+		options  TemplateOptions
+		expected []string
+		error    bool
+	}{
+		{
+			name:     "no arguments",
+			command:  Command{Command: []string{"echo"}},
+			expected: []string{},
+		},
+		{
+			name:     "arguments",
+			command:  Command{Command: []string{"echo", "hello", "world"}},
+			expected: []string{"hello", "world"},
+		},
+		{
+			name:     "template",
+			command:  Command{Command: []string{"echo", "{{.LocalPort}}"}},
+			data:     TemplateData{LocalPort: 5678},
+			expected: []string{"5678"},
+		},
+		{
+			name:     "Arg template",
+			command:  Command{Command: []string{"echo", "{{.Args.foo}}"}},
+			data:     TemplateData{Args: Args{"foo": "bar"}},
+			expected: []string{"bar"},
+		},
+		{
+			name:     "Outputs template",
+			command:  Command{Command: []string{"echo", "{{.Outputs.foo}}"}},
+			data:     TemplateData{Outputs: map[string]string{"foo": "hello world"}},
+			expected: []string{"hello world"},
+		},
+		{
+			name:    "un-parseable template",
+			command: Command{Command: []string{"echo", "{{.Invalid"}},
+			error:   true,
+		},
+		{
+			name:    "un-executable template",
+			command: Command{Command: []string{"echo", "{{.Invalid}}"}},
+			error:   true,
+		},
+		{
+			name: "sensitive hidden",
+			command: Command{
+				Command: []string{"echo", `{{ "secret" | sensitive }}`},
+			},
+			expected: []string{"********"},
+		},
+		{
+			name: "sensitive shown",
+			command: Command{
+				Command: []string{"echo", `{{ "secret" | sensitive }}`},
+			},
+			options:  TemplateOptions{ShowSensitive: true},
+			expected: []string{"secret"},
+		},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			actual, err := tc.command.Args(tc.data, tc.options)
+
+			if tc.error {
+				assert.Error(t, err)
+
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, tc.expected, actual)
+		})
+	}
+}
+
 func TestParseCommandFromAnnotations(t *testing.T) {
 	t.Parallel()
 
