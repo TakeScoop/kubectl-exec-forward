@@ -12,5 +12,6 @@ func (o Outputs) Append(id string, output string) Outputs {
 	}
 
 	outputs[id] = output
+
 	return outputs
 }
