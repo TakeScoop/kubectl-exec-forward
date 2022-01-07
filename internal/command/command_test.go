@@ -95,8 +95,8 @@ func TestCommandDisplay(t *testing.T) {
 		{
 			name: "named",
 			command: Command{
-				Name:    "foo",
-				Command: []string{"echo", "hello", "world"},
+				DisplayName: "foo",
+				Command:     []string{"echo", "hello", "world"},
 			},
 			expected: chalk.Cyan.Color("foo") + ": " + chalk.Green.Color("echo hello world"),
 		},
