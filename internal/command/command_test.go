@@ -279,6 +279,7 @@ func TestCommandExecute(t *testing.T) {
 		args    Args
 		outputs Outputs
 		command Command
+		stdin   string
 
 		expected Outputs
 		stdout   string
@@ -301,6 +302,13 @@ func TestCommandExecute(t *testing.T) {
 			command: Command{Command: []string{"echo", "{{.Invalid}}"}},
 			error:   true,
 		},
+		{
+			name:    "interactive",
+			command: Command{Command: []string{"cat"}, Interactive: true},
+			stdin:   "hello\n",
+			stderr:  "> cat\n",
+			stdout:  "hello\n",
+		},
 	}
 
 	for _, tc := range cases {
@@ -308,7 +316,12 @@ func TestCommandExecute(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			streams, _, stdout, stderr := genericclioptions.NewTestIOStreams()
+			streams, stdin, stdout, stderr := genericclioptions.NewTestIOStreams()
+
+			if tc.stdin != "" {
+				stdin.Write([]byte(tc.stdin))
+			}
+
 			outputs, err := tc.command.Execute(context.Background(), &tc.config, tc.args, tc.outputs, &streams)
 
 			if tc.error {
