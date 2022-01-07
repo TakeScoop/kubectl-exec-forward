@@ -136,7 +136,7 @@ func (c Command) Execute(ctx context.Context, config *Config, args Args, outputs
 
 	if config.Verbose {
 		ows = append(ows, streams.Out)
-		cmd.Stderr = streams.ErrOut
+		ews = append(ews, streams.ErrOut)
 	}
 
 	cmd.Stdout = io.MultiWriter(ows...)
