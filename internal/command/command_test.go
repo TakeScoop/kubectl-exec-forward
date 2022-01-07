@@ -309,6 +309,14 @@ func TestCommandExecute(t *testing.T) {
 			stderr:  "> cat\n",
 			stdout:  "hello\n",
 		},
+		{
+			name:     "verbose",
+			config:   Config{Verbose: true},
+			command:  Command{ID: "foo", Command: []string{"echo", "hello"}},
+			stderr:   "> echo hello\n",
+			stdout:   "hello\n",
+			expected: Outputs{"foo": "hello\n"},
+		},
 	}
 
 	for _, tc := range cases {
