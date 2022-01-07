@@ -23,13 +23,16 @@ type Command struct {
 	DisplayName string   `json:"name"`
 }
 
+// TemplateData is the data passed to command templates to render the command arguments.
 type TemplateData struct {
 	LocalPort int
 	Args      Args
 	Outputs   map[string]string
 }
 
+// TemplateOptions are the configurable options used in different rendering contexts.
 type TemplateOptions struct {
+	// ShowSensitive indicates whether sensitive values should be shown. When false, sensitive values are replaced with asterisks.
 	ShowSensitive bool
 }
 
@@ -73,7 +76,6 @@ func (c Command) ToCmd(ctx context.Context, data TemplateData) (*exec.Cmd, error
 	args, err := c.Args(data, TemplateOptions{
 		ShowSensitive: true,
 	})
-
 	if err != nil {
 		return nil, err
 	}

@@ -53,7 +53,7 @@ func TestCommandToCmd(t *testing.T) {
 			error:   true,
 		},
 		{
-			name:    "un-exectuable template",
+			name:    "un-executable template",
 			command: Command{Command: []string{"echo", "{{.Invalid}}"}},
 			error:   true,
 		},
