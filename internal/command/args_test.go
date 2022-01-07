@@ -26,23 +26,6 @@ func TestParseArgsFromAnnotations(t *testing.T) {
 			},
 		},
 		{
-			name:        "overrides",
-			annotations: map[string]string{ArgsAnnotation: `{"username":"foo","schema":"https"}`},
-			overrides:   map[string]string{"username": "bar"},
-			expected: Args{
-				"username": "bar",
-				"schema":   "https",
-			},
-		},
-		{
-			name: "overrides without default in annotation",
-			annotations: map[string]string{
-				ArgsAnnotation: "{}",
-			},
-			overrides: map[string]string{"username": "bar"},
-			expected:  Args{"username": "bar"},
-		},
-		{
 			name: "invalid json",
 			annotations: map[string]string{
 				ArgsAnnotation: "",
@@ -61,7 +44,7 @@ func TestParseArgsFromAnnotations(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			actual, err := ParseArgsFromAnnotations(tc.annotations, tc.overrides)
+			actual, err := ParseArgsFromAnnotations(tc.annotations)
 
 			if tc.error != "" {
 				assert.EqualError(t, err, tc.error)
@@ -70,6 +53,46 @@ func TestParseArgsFromAnnotations(t *testing.T) {
 
 			require.NoError(t, err)
 			assert.Equal(t, tc.expected, actual)
+		})
+	}
+}
+
+func TestArgsMerge(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name      string
+		args      Args
+		overrides map[string]string
+		expected  Args
+	}{
+		{
+			name:      "override existing",
+			args:      Args{"username": "foo"},
+			overrides: map[string]string{"username": "bar"},
+			expected:  Args{"username": "bar"},
+		},
+		{
+			name:     "noop",
+			args:     Args{"username": "foo"},
+			expected: Args{"username": "foo"},
+		},
+		{
+			name:      "new key",
+			args:      Args{},
+			overrides: Args{"username": "new"},
+			expected:  Args{"username": "new"},
+		},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			tc.args.Merge(tc.overrides)
+			assert.Equal(t, tc.expected, tc.args)
 		})
 	}
 }
