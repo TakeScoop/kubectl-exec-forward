@@ -216,6 +216,16 @@ func TestCommandArgs(t *testing.T) {
 	}
 }
 
+func TestCommandArgs_NoMutate(t *testing.T) {
+	cmd := Command{Command: []string{"echo", "{{.Args.foo}}"}}
+
+	args, err := cmd.Args(TemplateData{Args: Args{"foo": "bar"}}, TemplateOptions{})
+	require.NoError(t, err)
+
+	assert.Equal(t, []string{"bar"}, args)
+	assert.Equal(t, []string{"echo", "{{.Args.foo}}"}, cmd.Command)
+}
+
 func TestParseCommandFromAnnotations(t *testing.T) {
 	t.Parallel()
 

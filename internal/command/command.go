@@ -47,7 +47,8 @@ func (c Command) Args(data TemplateData, options TemplateOptions) ([]string, err
 		return []string{}, nil
 	}
 
-	args := c.Command[1:]
+	args := make([]string, len(c.Command)-1)
+	copy(args, c.Command[1:])
 
 	for i, raw := range args {
 		tpl, err := template.New(c.ID).Option("missingkey=error").Funcs(template.FuncMap{
