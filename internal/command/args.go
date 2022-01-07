@@ -7,8 +7,8 @@ import (
 // Args store command specific arguments to be passed to the hook commands.
 type Args map[string]string
 
-// parseArgs parses key value pairs from the passed annotations map, adds any overrides passed and returns a new args map.
-func parseArgs(annotations map[string]string, overrides map[string]string) (*Args, error) {
+// ParseArgsFromAnnotations parses key value pairs from the passed annotations map, adds any overrides passed and returns a new args map.
+func ParseArgsFromAnnotations(annotations map[string]string) (Args, error) {
 	args := Args{}
 
 	v, ok := annotations[ArgsAnnotation]
@@ -18,9 +18,12 @@ func parseArgs(annotations map[string]string, overrides map[string]string) (*Arg
 		}
 	}
 
-	for k, v := range overrides {
-		args[k] = v
-	}
+	return args, nil
+}
 
-	return &args, nil
+// Merge merges the provided overrides into the existing args, mutating the existing args.
+func (a Args) Merge(overrides map[string]string) {
+	for k, v := range overrides {
+		a[k] = v
+	}
 }

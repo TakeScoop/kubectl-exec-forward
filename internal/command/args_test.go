@@ -4,55 +4,96 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func TestParseArgs(t *testing.T) {
-	t.Run("Parse basic args", func(t *testing.T) {
-		annotations := map[string]string{
-			PreAnnotation:  `{}`,
-			ArgsAnnotation: `{"username":"foo","schema":"https"}`,
-		}
+func TestParseArgsFromAnnotations(t *testing.T) {
+	t.Parallel()
 
-		args, err := parseArgs(annotations, map[string]string{})
-		assert.NoError(t, err)
+	cases := []struct {
+		name        string
+		annotations map[string]string
+		overrides   map[string]string
+		expected    Args
+		error       string
+	}{
+		{
+			name:        "basic",
+			annotations: map[string]string{ArgsAnnotation: `{"username":"foo","schema":"https"}`},
+			expected: Args{
+				"username": "foo",
+				"schema":   "https",
+			},
+		},
+		{
+			name: "invalid json",
+			annotations: map[string]string{
+				ArgsAnnotation: "",
+			},
+			error: "unexpected end of JSON input",
+		},
+		{
+			name:     "no annotation",
+			expected: Args{},
+		},
+	}
 
-		expected := Args{
-			"username": "foo",
-			"schema":   "https",
-		}
+	for _, tc := range cases {
+		tc := tc
 
-		assert.Equal(t, &expected, args)
-	})
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("Parse with overrides", func(t *testing.T) {
-		annotations := map[string]string{
-			PreAnnotation:  `{}`,
-			ArgsAnnotation: `{"username":"foo","schema":"https"}`,
-		}
+			actual, err := ParseArgsFromAnnotations(tc.annotations)
 
-		args, err := parseArgs(annotations, map[string]string{
-			"username": "bar",
+			if tc.error != "" {
+				assert.EqualError(t, err, tc.error)
+
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, tc.expected, actual)
 		})
-		assert.NoError(t, err)
+	}
+}
 
-		expected := Args{
-			"username": "bar",
-			"schema":   "https",
-		}
+func TestArgsMerge(t *testing.T) {
+	t.Parallel()
 
-		assert.Equal(t, &expected, args)
-	})
+	cases := []struct {
+		name      string
+		args      Args
+		overrides map[string]string
+		expected  Args
+	}{
+		{
+			name:      "override existing",
+			args:      Args{"username": "foo"},
+			overrides: map[string]string{"username": "bar"},
+			expected:  Args{"username": "bar"},
+		},
+		{
+			name:     "noop",
+			args:     Args{"username": "foo"},
+			expected: Args{"username": "foo"},
+		},
+		{
+			name:      "new key",
+			args:      Args{},
+			overrides: Args{"username": "new"},
+			expected:  Args{"username": "new"},
+		},
+	}
 
-	t.Run("Add overrides with no args annotation", func(t *testing.T) {
-		args, err := parseArgs(map[string]string{}, map[string]string{
-			"username": "bar",
+	for _, tc := range cases {
+		tc := tc
+
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			tc.args.Merge(tc.overrides)
+			assert.Equal(t, tc.expected, tc.args)
 		})
-		assert.NoError(t, err)
-
-		expected := Args{
-			"username": "bar",
-		}
-
-		assert.Equal(t, &expected, args)
-	})
+	}
 }
