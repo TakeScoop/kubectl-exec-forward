@@ -67,7 +67,7 @@ func Run(ctx context.Context, client *forwarder.Client, hooksConfig *Config, cli
 			hookErrChan <- err
 		}
 
-		if _, err = hooks.Command.execute(cancelCtx, hooksConfig, args, outputs, streams); err != nil {
+		if _, err = hooks.Command.Execute(cancelCtx, hooksConfig, args, outputs, streams); err != nil {
 			hookErrChan <- err
 		}
 

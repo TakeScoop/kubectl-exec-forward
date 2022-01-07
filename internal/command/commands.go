@@ -18,7 +18,7 @@ func (c Commands) execute(ctx context.Context, config *Config, args Args, previo
 	}
 
 	for _, command := range c {
-		outputs, err = command.execute(ctx, config, args, outputs, streams)
+		outputs, err = command.Execute(ctx, config, args, outputs, streams)
 		if err != nil {
 			return nil, err
 		}

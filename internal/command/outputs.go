@@ -1,15 +1,17 @@
 package command
 
-// Outputs is a collection of Output structs.
-type Outputs map[string]Output
+// Outputs is a collection of command outputs keyed by ID.
+type Outputs map[string]string
 
-// Stdout returns the output Stdout by the Output ID.
-func (o Outputs) Stdout() map[string]string {
-	out := map[string]string{}
+// Append copies the existing output, appending the new output, and returns the new, extended outputs.
+func (o Outputs) Append(id string, output string) Outputs {
+	outputs := Outputs{}
 
-	for id, output := range o {
-		out[id] = output.Stdout
+	for k, v := range o {
+		outputs[k] = v
 	}
 
-	return out
+	outputs[id] = output
+
+	return outputs
 }
