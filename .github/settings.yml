@@ -5,3 +5,10 @@ repository:
   topics: kubernetes, kubectl
   allow_auto_merge: true
   private: false
+branches:
+  - name: master
+    protection:
+      required_status_checks:
+        contexts:
+          - test
+          - lint
