@@ -95,7 +95,7 @@ func (c Command) Display(data TemplateData) (string, error) {
 	command := append([]string{name}, args...)
 	str = append(str, chalk.Green.Color(strings.Join(command, " ")))
 
-	return fmt.Sprintf("%s\n", strings.Join(str, ": ")), nil
+	return strings.Join(str, ": "), nil
 }
 
 // execute runs the command with the given config and outputs.
@@ -122,7 +122,7 @@ func (c Command) execute(ctx context.Context, config *Config, args Args, previou
 		return nil, err
 	}
 
-	fmt.Fprintf(streams.ErrOut, "> %s", cmdStr)
+	fmt.Fprintf(streams.ErrOut, "> %s\n", cmdStr)
 
 	if c.Interactive {
 		cmd.Stdout = streams.Out
