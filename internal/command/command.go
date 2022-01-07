@@ -168,9 +168,9 @@ func (c Command) execute(ctx context.Context, config *Config, args Args, previou
 	return outputs, err
 }
 
-// parseCommand returns a Command from an annotation storing a single command in json format.
-func parseComand(annotations map[string]string, key string) (command Command, err error) {
-	v, ok := annotations[key]
+// ParseCommandFromAnnotations returns a Command from annotations storing a single command in json format.
+func ParseCommandFromAnnotations(annotations map[string]string) (command Command, err error) {
+	v, ok := annotations[CommandAnnotation]
 	if !ok {
 		return command, nil
 	}

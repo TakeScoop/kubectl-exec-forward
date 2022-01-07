@@ -24,7 +24,7 @@ func newHooks(annotations map[string]string, config *Config) (*Hooks, error) {
 		Post: post,
 	}
 
-	c, err := parseComand(annotations, CommandAnnotation)
+	c, err := ParseCommandFromAnnotations(annotations)
 	if err != nil {
 		return nil, err
 	}
