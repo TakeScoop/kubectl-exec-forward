@@ -15,6 +15,7 @@ func TestParseArgsFromAnnotations(t *testing.T) {
 		annotations map[string]string
 		overrides   map[string]string
 		expected    Args
+		error       string
 	}{
 		{
 			name:        "basic",
@@ -42,6 +43,13 @@ func TestParseArgsFromAnnotations(t *testing.T) {
 			expected:  Args{"username": "bar"},
 		},
 		{
+			name: "invalid json",
+			annotations: map[string]string{
+				ArgsAnnotation: "",
+			},
+			error: "unexpected end of JSON input",
+		},
+		{
 			name:     "no annotation",
 			expected: Args{},
 		},
@@ -54,8 +62,13 @@ func TestParseArgsFromAnnotations(t *testing.T) {
 			t.Parallel()
 
 			actual, err := ParseArgsFromAnnotations(tc.annotations, tc.overrides)
-			require.NoError(t, err)
 
+			if tc.error != "" {
+				assert.EqualError(t, err, tc.error)
+				return
+			}
+
+			require.NoError(t, err)
 			assert.Equal(t, &tc.expected, actual)
 		})
 	}
