@@ -104,8 +104,8 @@ func (c Command) Display(data TemplateData) (string, error) {
 	return strings.Join(str, ": "), nil
 }
 
-// execute runs the command with the given config and outputs.
-func (c Command) execute(ctx context.Context, config *Config, args Args, previousOutputs Outputs, streams *genericclioptions.IOStreams) (Outputs, error) {
+// Execute runs the command with the given config and outputs.
+func (c Command) Execute(ctx context.Context, config *Config, args Args, previousOutputs Outputs, streams *genericclioptions.IOStreams) (Outputs, error) {
 	outputs := Outputs{}
 
 	for k, v := range previousOutputs {
