@@ -29,8 +29,8 @@ type templateInputs struct {
 	Outputs   map[string]string
 }
 
-// toCmd returns a golang cmd object from the calling command.
-func (c Command) toCmd(ctx context.Context, config *Config, cmdArgs Args, outputs Outputs) (*exec.Cmd, error) {
+// ToCmd returns a Cmd object that can be used with the exec package.
+func (c Command) ToCmd(ctx context.Context, config *Config, cmdArgs Args, outputs Outputs) (*exec.Cmd, error) {
 	name, args, err := c.render(config, cmdArgs, outputs, true)
 	if err != nil {
 		return nil, err
@@ -103,7 +103,7 @@ func (c Command) execute(ctx context.Context, config *Config, args Args, previou
 		outputs[k] = v
 	}
 
-	cmd, err := c.toCmd(ctx, config, args, outputs)
+	cmd, err := c.ToCmd(ctx, config, args, outputs)
 	if err != nil {
 		return nil, err
 	}
