@@ -69,7 +69,7 @@ func TestParseArgsFromAnnotations(t *testing.T) {
 			}
 
 			require.NoError(t, err)
-			assert.Equal(t, &tc.expected, actual)
+			assert.Equal(t, tc.expected, actual)
 		})
 	}
 }

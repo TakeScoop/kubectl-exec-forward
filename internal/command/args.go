@@ -8,7 +8,7 @@ import (
 type Args map[string]string
 
 // ParseArgsFromAnnotations parses key value pairs from the passed annotations map, adds any overrides passed and returns a new args map.
-func ParseArgsFromAnnotations(annotations map[string]string, overrides map[string]string) (*Args, error) {
+func ParseArgsFromAnnotations(annotations map[string]string, overrides map[string]string) (Args, error) {
 	args := Args{}
 
 	v, ok := annotations[ArgsAnnotation]
@@ -22,5 +22,5 @@ func ParseArgsFromAnnotations(annotations map[string]string, overrides map[strin
 		args[k] = v
 	}
 
-	return &args, nil
+	return args, nil
 }
