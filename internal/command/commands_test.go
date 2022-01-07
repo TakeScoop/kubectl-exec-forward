@@ -41,7 +41,7 @@ func TestParseCommands(t *testing.T) {
 		assert.NoError(t, err)
 
 		expected := Commands{
-			{ID: "", Command: []string{"echo", "post1"}, Name: "send post1 to stdout"},
+			{ID: "", Command: []string{"echo", "post1"}, DisplayName: "send post1 to stdout"},
 			{ID: "foo", Command: []string{"echo", "post2"}},
 		}
 		assert.Equal(t, expected, commands)

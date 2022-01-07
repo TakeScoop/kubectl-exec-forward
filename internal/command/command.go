@@ -20,79 +20,88 @@ type Command struct {
 	ID          string   `json:"id"`
 	Command     []string `json:"command"`
 	Interactive bool     `json:"interactive"`
-	Name        string   `json:"name"`
+	DisplayName string   `json:"name"`
 }
 
-type templateInputs struct {
+// TemplateData is the data passed to command templates to render the command arguments.
+type TemplateData struct {
 	LocalPort int
 	Args      Args
 	Outputs   map[string]string
 }
 
-// toCmd returns a golang cmd object from the calling command.
-func (c Command) toCmd(ctx context.Context, config *Config, cmdArgs Args, outputs Outputs) (*exec.Cmd, error) {
-	name, args, err := c.render(config, cmdArgs, outputs, true)
-	if err != nil {
-		return nil, err
-	}
-
-	// nolint:gosec
-	return exec.CommandContext(ctx, name, args...), nil
+// TemplateOptions are the configurable options used in different rendering contexts.
+type TemplateOptions struct {
+	// ShowSensitive indicates whether sensitive values should be shown. When false, sensitive values are replaced with asterisks.
+	ShowSensitive bool
 }
 
-func (c Command) render(config *Config, cmdArgs Args, outputs Outputs, showSensitive bool) (name string, args []string, err error) {
-	name = c.Command[0]
-	rawArgs := []string{}
+// Name returns the name of the program.
+func (c Command) Name() string {
+	return c.Command[0]
+}
 
-	if len(c.Command) > 1 {
-		rawArgs = append(rawArgs, c.Command[1:]...)
+// Args renders the command arguments using the provided template data and options.
+func (c Command) Args(data TemplateData, options TemplateOptions) ([]string, error) {
+	if len(c.Command) <= 1 {
+		return []string{}, nil
 	}
 
-	args = make([]string, len(rawArgs))
+	args := make([]string, len(c.Command)-1)
+	copy(args, c.Command[1:])
 
-	for i, a := range rawArgs {
+	for i, raw := range args {
 		tpl, err := template.New(c.ID).Option("missingkey=error").Funcs(template.FuncMap{
 			"trim":      strings.TrimSpace,
 			"json":      gjson.Get,
-			"sensitive": sensitiveFunc(showSensitive),
-		}).Parse(a)
+			"sensitive": sensitiveFunc(options.ShowSensitive),
+		}).Parse(raw)
 		if err != nil {
-			return "", nil, err
+			return nil, err
 		}
 
 		o := new(bytes.Buffer)
 
-		if err := tpl.Execute(o, &templateInputs{
-			LocalPort: config.LocalPort,
-			Args:      cmdArgs,
-			Outputs:   outputs.Stdout(),
-		}); err != nil {
-			return "", nil, err
+		if err := tpl.Execute(o, data); err != nil {
+			return nil, err
 		}
 
 		args[i] = o.String()
 	}
 
-	return name, args, nil
+	return args, nil
+}
+
+// ToCmd returns a Cmd object that can be used with the exec package.
+func (c Command) ToCmd(ctx context.Context, data TemplateData) (*exec.Cmd, error) {
+	args, err := c.Args(data, TemplateOptions{
+		ShowSensitive: true,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// nolint:gosec
+	return exec.CommandContext(ctx, c.Name(), args...), nil
 }
 
 // Display returns the command as a human readable string.
-func (c Command) Display(config *Config, cmdArgs Args, outputs Outputs) (string, error) {
+func (c Command) Display(data TemplateData) (string, error) {
 	str := []string{}
 
-	if c.Name != "" {
-		str = append(str, chalk.Cyan.Color(c.Name))
+	if c.DisplayName != "" {
+		str = append(str, chalk.Cyan.Color(c.DisplayName))
 	}
 
-	name, args, err := c.render(config, cmdArgs, outputs, false)
+	args, err := c.Args(data, TemplateOptions{})
 	if err != nil {
 		return "", err
 	}
 
-	command := append([]string{name}, args...)
+	command := append([]string{c.Name()}, args...)
 	str = append(str, chalk.Green.Color(strings.Join(command, " ")))
 
-	return fmt.Sprintf("%s\n", strings.Join(str, ": ")), nil
+	return strings.Join(str, ": "), nil
 }
 
 // execute runs the command with the given config and outputs.
@@ -103,17 +112,23 @@ func (c Command) execute(ctx context.Context, config *Config, args Args, previou
 		outputs[k] = v
 	}
 
-	cmd, err := c.toCmd(ctx, config, args, outputs)
+	data := TemplateData{
+		LocalPort: config.LocalPort,
+		Args:      args,
+		Outputs:   previousOutputs.Stdout(),
+	}
+
+	cmd, err := c.ToCmd(ctx, data)
 	if err != nil {
 		return nil, err
 	}
 
-	cmdStr, err := c.Display(config, args, outputs)
+	cmdStr, err := c.Display(data)
 	if err != nil {
 		return nil, err
 	}
 
-	fmt.Fprintf(streams.ErrOut, "> %s", cmdStr)
+	fmt.Fprintf(streams.ErrOut, "> %s\n", cmdStr)
 
 	if c.Interactive {
 		cmd.Stdout = streams.Out
@@ -138,9 +153,11 @@ func (c Command) execute(ctx context.Context, config *Config, args Args, previou
 	cmd.Stderr = io.MultiWriter(ews...)
 
 	if err := cmd.Run(); err != nil {
-		name, args, _ := c.render(config, args, outputs, false)
+		args, err := c.Args(data, TemplateOptions{
+			ShowSensitive: false,
+		})
 
-		errStr := fmt.Sprintf("Error running command: %v\n%s\n", append([]string{name}, args...), errBuff)
+		errStr := fmt.Sprintf("Error running command: %v\n%s\n", append([]string{c.Name()}, args...), errBuff)
 
 		fmt.Fprint(streams.ErrOut, chalk.Red.Color(errStr))
 
@@ -157,9 +174,9 @@ func (c Command) execute(ctx context.Context, config *Config, args Args, previou
 	return outputs, err
 }
 
-// parseCommand returns a Command from an annotation storing a single command in json format.
-func parseComand(annotations map[string]string, key string) (command Command, err error) {
-	v, ok := annotations[key]
+// ParseCommandFromAnnotations returns a Command from annotations storing a single command in json format.
+func ParseCommandFromAnnotations(annotations map[string]string) (command Command, err error) {
+	v, ok := annotations[CommandAnnotation]
 	if !ok {
 		return command, nil
 	}
