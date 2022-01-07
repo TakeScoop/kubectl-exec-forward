@@ -8,7 +8,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-// restGetter wraps the passed getter, allowing for extended behavior on the interface methods
+// restGetter wraps the passed getter, allowing for extended behavior on the interface methods.
 type restGetter struct {
 	getter    genericclioptions.RESTClientGetter
 	userAgent string
