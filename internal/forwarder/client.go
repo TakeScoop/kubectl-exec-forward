@@ -24,10 +24,10 @@ type Client struct {
 // NewClient returns an uninitialized forwarding client.
 func NewClient(timeout time.Duration, streams *genericclioptions.IOStreams) *Client {
 	return &Client{
-		factory:    nil,
 		timeout:    timeout,
 		streams:    streams,
 		clientset:  nil,
+		factory:    nil,
 		restConfig: nil,
 		userConfig: nil,
 	}
@@ -38,8 +38,8 @@ func (c *Client) Init(getter *cmdutil.MatchVersionFlags, overrides clientcmd.Con
 	userAgent := fmt.Sprintf("kubectl-exec-forward/%s", version)
 
 	c.factory = cmdutil.NewFactory(restGetter{
-		getter:    getter,
-		userAgent: userAgent,
+		restClientGetter: getter,
+		userAgent:        userAgent,
 	})
 
 	kc := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
