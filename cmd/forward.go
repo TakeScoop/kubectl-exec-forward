@@ -35,8 +35,8 @@ func newForwardCommand(streams *genericclioptions.IOStreams, version string) *co
 				return err
 			}
 
-			client := forwarder.NewClient(cmdutil.NewMatchVersionFlags(kubeConfigFlags), podTimeout, streams)
-			if err := client.Init(overrides, version); err != nil {
+			client := forwarder.NewClient(podTimeout, streams)
+			if err := client.Init(cmdutil.NewMatchVersionFlags(kubeConfigFlags), overrides, version); err != nil {
 				return err
 			}
 

@@ -22,21 +22,26 @@ type Client struct {
 }
 
 // NewClient returns an uninitialized forwarding client.
-func NewClient(getter *cmdutil.MatchVersionFlags, timeout time.Duration, streams *genericclioptions.IOStreams) *Client {
-	factory := cmdutil.NewFactory(getter)
-
+func NewClient(timeout time.Duration, streams *genericclioptions.IOStreams) *Client {
 	return &Client{
-		factory:    factory,
 		timeout:    timeout,
 		streams:    streams,
 		clientset:  nil,
+		factory:    nil,
 		restConfig: nil,
 		userConfig: nil,
 	}
 }
 
 // Init instantiates a Kubernetes client and rest configuration for the forwarding client.
-func (c *Client) Init(overrides clientcmd.ConfigOverrides, version string) error {
+func (c *Client) Init(getter *cmdutil.MatchVersionFlags, overrides clientcmd.ConfigOverrides, version string) error {
+	userAgent := fmt.Sprintf("kubectl-exec-forward/%s", version)
+
+	c.factory = cmdutil.NewFactory(restGetter{
+		restClientGetter: getter,
+		userAgent:        userAgent,
+	})
+
 	kc := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 		clientcmd.NewDefaultClientConfigLoadingRules(),
 		&overrides,
@@ -49,7 +54,7 @@ func (c *Client) Init(overrides clientcmd.ConfigOverrides, version string) error
 		return err
 	}
 
-	rc.UserAgent = fmt.Sprintf("kubectl-exec-forward/%s", version)
+	rc.UserAgent = userAgent
 
 	c.restConfig = rc
 
