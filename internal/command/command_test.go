@@ -7,14 +7,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestToCmd(t *testing.T) {
+func TestCommandToCmd(t *testing.T) {
 	t.Run("returns a cmd with no arguments", func(t *testing.T) {
 		c := &Command{
 			ID:      "foo",
 			Command: []string{"echo"},
 		}
 
-		cmd, err := c.ToCmd(context.Background(), &Config{}, Args{}, Outputs{})
+		cmd, err := c.ToCmd(context.Background(), TemplateData{})
 		assert.NoError(t, err)
 
 		assert.Equal(t, []string{"echo"}, cmd.Args)
@@ -26,7 +26,7 @@ func TestToCmd(t *testing.T) {
 			Command: []string{"echo", "hello", "world"},
 		}
 
-		cmd, err := c.ToCmd(context.Background(), &Config{}, Args{}, Outputs{})
+		cmd, err := c.ToCmd(context.Background(), TemplateData{})
 		assert.NoError(t, err)
 
 		assert.Equal(t, []string{"echo", "hello", "world"}, cmd.Args)
@@ -38,10 +38,9 @@ func TestToCmd(t *testing.T) {
 			Command: []string{"echo", "{{.LocalPort}}"},
 		}
 
-		cmd, err := c.ToCmd(context.Background(), &Config{
+		cmd, err := c.ToCmd(context.Background(), TemplateData{
 			LocalPort: 5678,
-			Verbose:   true,
-		}, Args{}, Outputs{})
+		})
 		assert.NoError(t, err)
 
 		assert.Equal(t, []string{"echo", "5678"}, cmd.Args)
@@ -53,7 +52,9 @@ func TestToCmd(t *testing.T) {
 			Command: []string{"echo", "{{.Args.foo}}"},
 		}
 
-		cmd, err := c.ToCmd(context.Background(), &Config{}, Args{"foo": "bar"}, Outputs{})
+		cmd, err := c.ToCmd(context.Background(), TemplateData{
+			Args: Args{"foo": "bar"},
+		})
 		assert.NoError(t, err)
 
 		assert.Equal(t, []string{"echo", "bar"}, cmd.Args)
@@ -65,10 +66,9 @@ func TestToCmd(t *testing.T) {
 			Command: []string{"echo", "{{.Outputs.foo}}"},
 		}
 
-		cmd, err := c.ToCmd(context.Background(), &Config{}, Args{}, Outputs{
-			"foo": {
-				Stdout: "hello world",
-				Stderr: "",
+		cmd, err := c.ToCmd(context.Background(), TemplateData{
+			Outputs: map[string]string{
+				"foo": "hello world",
 			},
 		})
 		assert.NoError(t, err)
@@ -82,7 +82,7 @@ func TestToCmd(t *testing.T) {
 			Command: []string{"echo", "{{.DoesNotExist}}"},
 		}
 
-		_, err := c.ToCmd(context.Background(), &Config{}, Args{}, Outputs{})
+		_, err := c.ToCmd(context.Background(), TemplateData{})
 		assert.Error(t, err)
 	})
 
@@ -91,7 +91,7 @@ func TestToCmd(t *testing.T) {
 			Command: []string{"echo", "foo"},
 		}
 
-		cmd, err := c.ToCmd(context.Background(), &Config{}, Args{}, Outputs{})
+		cmd, err := c.ToCmd(context.Background(), TemplateData{})
 		assert.NoError(t, err)
 
 		assert.Equal(t, []string{"echo", "foo"}, cmd.Args)
