@@ -72,9 +72,7 @@ func TestCommandsExecute(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			streams := genericclioptions.NewTestIOStreamsDiscard()
-
-			outputs, err := tc.commands.Execute(context.Background(), &Config{}, Args{}, tc.outputs, &streams)
+			outputs, err := tc.commands.Execute(context.Background(), &Config{}, Args{}, tc.outputs, genericclioptions.NewTestIOStreamsDiscard())
 
 			if tc.error {
 				assert.Error(t, err)

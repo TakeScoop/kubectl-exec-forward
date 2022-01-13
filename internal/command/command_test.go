@@ -360,7 +360,7 @@ func TestCommandExecute(t *testing.T) {
 				stdin.Write([]byte(tc.stdin))
 			}
 
-			output, err := tc.command.Execute(context.Background(), &tc.config, tc.args, tc.outputs, &streams)
+			output, err := tc.command.Execute(context.Background(), &tc.config, tc.args, tc.outputs, streams)
 
 			if tc.error {
 				assert.Error(t, err)
