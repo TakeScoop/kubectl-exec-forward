@@ -1,5 +1,7 @@
 # kubectl-exec-forward
 
+![test workflow status](https://github.com/takescoop/kubectl-exec-forward/actions/workflows/test.yml/badge.svg)
+
 A kubectl plugin to run exec commands exposed on Kubernetes pod annotations during a port-forward action lifecycle. 
 
 ## Install
