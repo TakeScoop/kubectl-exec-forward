@@ -10,8 +10,8 @@ import (
 // Commands stores a slice of commands and provides some helper execution methods.
 type Commands []*Command
 
-// execute runs each command in the calling slice sequentially using the passed config and the outputs accumulated to that point.
-func (c Commands) execute(ctx context.Context, config *Config, args Args, previousOutputs Outputs, streams *genericclioptions.IOStreams) (outputs Outputs, err error) {
+// Execute runs each command in the calling slice sequentially using the passed config and the outputs accumulated to that point.
+func (c Commands) Execute(ctx context.Context, config *Config, args Args, previousOutputs Outputs, streams *genericclioptions.IOStreams) (outputs Outputs, err error) {
 	outputs = Outputs{}
 	for k, v := range previousOutputs {
 		outputs[k] = v

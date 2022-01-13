@@ -46,7 +46,7 @@ func Run(ctx context.Context, client *forwarder.Client, hooksConfig *Config, cli
 
 	outputs := Outputs{}
 
-	if outputs, err = hooks.Pre.execute(ctx, hooksConfig, args, outputs, streams); err != nil {
+	if outputs, err = hooks.Pre.Execute(ctx, hooksConfig, args, outputs, streams); err != nil {
 		return err
 	}
 
@@ -63,7 +63,7 @@ func Run(ctx context.Context, client *forwarder.Client, hooksConfig *Config, cli
 
 		hooksConfig.LocalPort = conn.Local
 
-		if outputs, err = hooks.Post.execute(cancelCtx, hooksConfig, args, outputs, streams); err != nil {
+		if outputs, err = hooks.Post.Execute(cancelCtx, hooksConfig, args, outputs, streams); err != nil {
 			hookErrChan <- err
 		}
 
