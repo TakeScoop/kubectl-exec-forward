@@ -23,6 +23,11 @@ func TestParseCommand(t *testing.T) {
 			expected:    command.Command{Command: []string{"echo", "hello"}},
 		},
 		{
+			name:        "none",
+			annotations: map[string]string{},
+			expected:    command.Command{},
+		},
+		{
 			name:        "invalid json",
 			annotations: map[string]string{Command: ""},
 			error:       "unexpected end of JSON input",

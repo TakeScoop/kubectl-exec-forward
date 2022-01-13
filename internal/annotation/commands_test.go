@@ -17,6 +17,7 @@ func TestParseCommands(t *testing.T) {
 		key         string
 
 		expected command.Commands
+		error    string
 	}{
 		{
 			name: "basic",
@@ -39,6 +40,19 @@ func TestParseCommands(t *testing.T) {
 				{ID: "foo", Command: []string{"echo", "post2"}},
 			},
 		},
+		{
+			name:        "unknown key",
+			annotations: map[string]string{},
+			key:         "invalid",
+		},
+		{
+			name: "invalid json",
+			annotations: map[string]string{
+				PreConnect: "",
+			},
+			key:   PreConnect,
+			error: "unexpected end of JSON input",
+		},
 	}
 
 	for _, tc := range cases {
@@ -48,6 +62,12 @@ func TestParseCommands(t *testing.T) {
 			t.Parallel()
 
 			actual, err := ParseCommands(tc.annotations, tc.key)
+
+			if tc.error != "" {
+				assert.EqualError(t, err, tc.error)
+
+				return
+			}
 
 			require.NoError(t, err)
 			assert.Equal(t, tc.expected, actual)

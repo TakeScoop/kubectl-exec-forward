@@ -38,7 +38,7 @@ func Run(ctx context.Context, client *forwarder.Client, hooksConfig *Config, cli
 	outputs := command.Outputs{}
 	commandConfig := &command.Config{
 		LocalPort: hooksConfig.LocalPort,
-		Verbose: hooksConfig.Verbose,
+		Verbose:   hooksConfig.Verbose,
 	}
 
 	if outputs, err = hooks.Pre.Execute(ctx, commandConfig, args, outputs, streams); err != nil {
