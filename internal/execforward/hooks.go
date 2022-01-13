@@ -1,20 +1,25 @@
-package command
+package execforward
+
+import (
+	"github.com/takescoop/kubectl-exec-forward/internal/annotation"
+	"github.com/takescoop/kubectl-exec-forward/internal/command"
+)
 
 // Hooks store information regarding command hooks.
 type Hooks struct {
-	Pre     Commands
-	Post    Commands
-	Command Command
+	Pre     command.Commands
+	Post    command.Commands
+	Command command.Command
 }
 
 // newHooks returns a new Hooks struct assembled from the passed annotations.
 func newHooks(annotations map[string]string, config *Config) (*Hooks, error) {
-	pre, err := parseCommands(annotations, PreAnnotation)
+	pre, err := annotation.ParseCommands(annotations, annotation.PreConnect)
 	if err != nil {
 		return nil, err
 	}
 
-	post, err := parseCommands(annotations, PostAnnotation)
+	post, err := annotation.ParseCommands(annotations, annotation.PostConnect)
 	if err != nil {
 		return nil, err
 	}
@@ -24,7 +29,7 @@ func newHooks(annotations map[string]string, config *Config) (*Hooks, error) {
 		Post: post,
 	}
 
-	c, err := ParseCommandFromAnnotations(annotations)
+	c, err := annotation.ParseCommand(annotations)
 	if err != nil {
 		return nil, err
 	}

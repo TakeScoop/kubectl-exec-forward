@@ -1,9 +1,11 @@
-package command
+package execforward
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/takescoop/kubectl-exec-forward/internal/annotation"
+	"github.com/takescoop/kubectl-exec-forward/internal/command"
 )
 
 func TestNewHooks(t *testing.T) {
@@ -11,55 +13,55 @@ func TestNewHooks(t *testing.T) {
 		actual, err := newHooks(map[string]string{}, nil)
 		assert.NoError(t, err)
 
-		assert.Equal(t, &Hooks{Command: Command{Interactive: true}}, actual)
+		assert.Equal(t, &Hooks{Command: command.Command{Interactive: true}}, actual)
 	})
 
 	t.Run("return hooks with pre-connect commands", func(t *testing.T) {
 		actual, err := newHooks(map[string]string{
-			PreAnnotation: `[{"command": ["echo", "hello"]}]`,
+			annotation.PreConnect: `[{"command": ["echo", "hello"]}]`,
 		}, nil)
 		assert.NoError(t, err)
 
-		assert.Equal(t, Commands{{Command: []string{"echo", "hello"}}}, actual.Pre)
+		assert.Equal(t, command.Commands{{Command: []string{"echo", "hello"}}}, actual.Pre)
 	})
 
 	t.Run("return hooks with post-connect commands", func(t *testing.T) {
 		actual, err := newHooks(map[string]string{
-			PostAnnotation: `[{"command": ["echo", "hello"]}]`,
+			annotation.PostConnect: `[{"command": ["echo", "hello"]}]`,
 		}, nil)
 		assert.NoError(t, err)
 
-		assert.Equal(t, Commands{{Command: []string{"echo", "hello"}}}, actual.Post)
+		assert.Equal(t, command.Commands{{Command: []string{"echo", "hello"}}}, actual.Post)
 	})
 
 	t.Run("return hooks with a main command", func(t *testing.T) {
 		actual, err := newHooks(map[string]string{
-			CommandAnnotation: `{"command": ["echo", "hello"]}`,
+			annotation.Command: `{"command": ["echo", "hello"]}`,
 		}, nil)
 		assert.NoError(t, err)
 
-		assert.Equal(t, Command{Command: []string{"echo", "hello"}, Interactive: true}, actual.Command)
+		assert.Equal(t, command.Command{Command: []string{"echo", "hello"}, Interactive: true}, actual.Command)
 	})
 
 	t.Run("replace the command portion of the main command if command-override is supplied", func(t *testing.T) {
 		actual, err := newHooks(map[string]string{
-			CommandAnnotation: `{"command": ["echo", "hello"]}`,
+			annotation.Command: `{"command": ["echo", "hello"]}`,
 		}, &Config{Command: []string{"touch", "foo"}})
 		assert.NoError(t, err)
 
 		assert.Equal(t, &Hooks{
-			Command: Command{Command: []string{"touch", "foo", "hello"}, Interactive: true},
+			Command: command.Command{Command: []string{"touch", "foo", "hello"}, Interactive: true},
 		}, actual)
 	})
 
 	t.Run("keep existing command if the override command is empty", func(t *testing.T) {
 		actual, err := newHooks(map[string]string{
-			CommandAnnotation: `{"command": ["echo", "hello"]}`,
+			annotation.Command: `{"command": ["echo", "hello"]}`,
 		}, &Config{Command: []string{}})
 		assert.NoError(t, err)
 
 		assert.Equal(t, &Hooks{
-			Command: Command{Command: []string{"echo", "hello"}, Interactive: true},
+			Command: command.Command{Command: []string{"echo", "hello"}, Interactive: true},
 		}, actual)
 	})
 }

@@ -1,21 +1,12 @@
-package command
+package execforward
 
 import (
 	"context"
 
+	"github.com/takescoop/kubectl-exec-forward/internal/annotation"
+	"github.com/takescoop/kubectl-exec-forward/internal/command"
 	"github.com/takescoop/kubectl-exec-forward/internal/forwarder"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
-)
-
-const (
-	// ArgsAnnotation is the annotation key name used to store arguments to pass to the commands.
-	ArgsAnnotation string = "exec-forward.pod.kubernetes.io/args"
-	// PreAnnotation is the annotation key name used to store commands run before establishing a portforward connection.
-	PreAnnotation string = "exec-forward.pod.kubernetes.io/pre-connect"
-	// PostAnnotation is the annotation key name used to store commands run after establishing a portforward connection.
-	PostAnnotation string = "exec-forward.pod.kubernetes.io/post-connect"
-	// CommandAnnotation is the annotation key name used to store the main command to run after the post-connect hook has been run.
-	CommandAnnotation string = "exec-forward.pod.kubernetes.io/command"
 )
 
 // Run executes hooks found on the passed resource's underlying pod annotations and opens a forwarding connection to the resource.
@@ -32,7 +23,7 @@ func Run(ctx context.Context, client *forwarder.Client, hooksConfig *Config, cli
 
 	hooksConfig.LocalPort = localPort
 
-	args, err := ParseArgsFromAnnotations(fwdConfig.Pod.Annotations)
+	args, err := annotation.ParseArgs(fwdConfig.Pod.Annotations)
 	if err != nil {
 		return err
 	}
@@ -44,9 +35,13 @@ func Run(ctx context.Context, client *forwarder.Client, hooksConfig *Config, cli
 		return err
 	}
 
-	outputs := Outputs{}
+	outputs := command.Outputs{}
+	commandConfig := &command.Config{
+		LocalPort: hooksConfig.LocalPort,
+		Verbose:   hooksConfig.Verbose,
+	}
 
-	if outputs, err = hooks.Pre.Execute(ctx, hooksConfig, args, outputs, streams); err != nil {
+	if outputs, err = hooks.Pre.Execute(ctx, commandConfig, args, outputs, streams); err != nil {
 		return err
 	}
 
@@ -61,13 +56,13 @@ func Run(ctx context.Context, client *forwarder.Client, hooksConfig *Config, cli
 	go func() {
 		conn := <-readyChan
 
-		hooksConfig.LocalPort = conn.Local
+		commandConfig.LocalPort = conn.Local
 
-		if outputs, err = hooks.Post.Execute(cancelCtx, hooksConfig, args, outputs, streams); err != nil {
+		if outputs, err = hooks.Post.Execute(cancelCtx, commandConfig, args, outputs, streams); err != nil {
 			hookErrChan <- err
 		}
 
-		if _, err = hooks.Command.Execute(cancelCtx, hooksConfig, args, outputs, streams); err != nil {
+		if _, err = hooks.Command.Execute(cancelCtx, commandConfig, args, outputs, streams); err != nil {
 			hookErrChan <- err
 		}
 

@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/takescoop/kubectl-exec-forward/internal/command"
+	"github.com/takescoop/kubectl-exec-forward/internal/execforward"
 	"github.com/takescoop/kubectl-exec-forward/internal/forwarder"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/tools/clientcmd"
@@ -48,7 +48,7 @@ func newForwardCommand(streams genericclioptions.IOStreams, version string) *cob
 				return err
 			}
 
-			config := &command.Config{
+			config := &execforward.Config{
 				Command: args[2:],
 			}
 
@@ -74,7 +74,7 @@ func newForwardCommand(streams genericclioptions.IOStreams, version string) *cob
 				cancel()
 			}()
 
-			return command.Run(cancelCtx, client, config, cmdArgs, args[0], args[1], streams)
+			return execforward.Run(cancelCtx, client, config, cmdArgs, args[0], args[1], streams)
 		},
 	}
 
