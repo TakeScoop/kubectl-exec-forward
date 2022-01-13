@@ -105,7 +105,7 @@ func (c Command) Display(data TemplateData) (string, error) {
 }
 
 // Execute runs the command with the given config and outputs.
-func (c Command) Execute(ctx context.Context, config *Config, args Args, outputs Outputs, streams *genericclioptions.IOStreams) (Outputs, error) {
+func (c Command) Execute(ctx context.Context, config *Config, args Args, outputs Outputs, streams *genericclioptions.IOStreams) ([]byte, error) {
 	data := TemplateData{
 		LocalPort: config.LocalPort,
 		Args:      args,
@@ -125,7 +125,8 @@ func (c Command) Execute(ctx context.Context, config *Config, args Args, outputs
 		cmd.Stderr = streams.ErrOut
 		cmd.Stdin = streams.In
 
-		return outputs, cmd.Run()
+		// interactive commands cannot return
+		return []byte{}, cmd.Run()
 	}
 
 	outBuff := new(bytes.Buffer)
@@ -154,11 +155,7 @@ func (c Command) Execute(ctx context.Context, config *Config, args Args, outputs
 		return nil, err
 	}
 
-	if c.ID != "" {
-		outputs = outputs.Append(c.ID, outBuff.String())
-	}
-
-	return outputs, nil
+	return outBuff.Bytes(), nil
 }
 
 // ParseCommandFromAnnotations returns a Command from annotations storing a single command in json format.

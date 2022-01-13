@@ -282,21 +282,22 @@ func TestCommandExecute(t *testing.T) {
 		command Command
 		stdin   string
 
-		expected Outputs
-		stdout   string
-		stderr   string
-		error    bool
+		output string
+		stdout string
+		stderr string
+		error  bool
 	}{
 		{
 			name:    "no id",
 			command: Command{Command: []string{"echo", "hello"}},
 			stderr:  "> echo hello\n",
+			output:  "hello\n",
 		},
 		{
-			name:     "output",
-			command:  Command{ID: "foo", Command: []string{"echo", "hello"}},
-			stderr:   "> echo hello\n",
-			expected: Outputs{"foo": "hello\n"},
+			name:    "output",
+			command: Command{ID: "foo", Command: []string{"echo", "hello"}},
+			stderr:  "> echo hello\n",
+			output:  "hello\n",
 		},
 		{
 			name:    "invalid",
@@ -311,12 +312,12 @@ func TestCommandExecute(t *testing.T) {
 			stdout:  "hello\n",
 		},
 		{
-			name:     "verbose",
-			config:   Config{Verbose: true},
-			command:  Command{ID: "foo", Command: []string{"echo", "hello"}},
-			stderr:   "> echo hello\n",
-			stdout:   "hello\n",
-			expected: Outputs{"foo": "hello\n"},
+			name:    "verbose",
+			config:  Config{Verbose: true},
+			command: Command{Command: []string{"echo", "hello"}},
+			stderr:  "> echo hello\n",
+			stdout:  "hello\n",
+			output:  "hello\n",
 		},
 		{
 			name: "run with error",
@@ -359,7 +360,7 @@ func TestCommandExecute(t *testing.T) {
 				stdin.Write([]byte(tc.stdin))
 			}
 
-			outputs, err := tc.command.Execute(context.Background(), &tc.config, tc.args, tc.outputs, &streams)
+			output, err := tc.command.Execute(context.Background(), &tc.config, tc.args, tc.outputs, &streams)
 
 			if tc.error {
 				assert.Error(t, err)
@@ -372,7 +373,7 @@ func TestCommandExecute(t *testing.T) {
 
 			assert.Equal(t, tc.stderr, string(plainStderr))
 			assert.Equal(t, tc.stdout, stdout.String())
-			assert.Equal(t, tc.expected, outputs)
+			assert.Equal(t, tc.output, string(output))
 		})
 	}
 }
