@@ -114,7 +114,7 @@ func TestRunForwardCommand(t *testing.T) {
 	out := &SafeBuffer{}
 	outErr := &SafeBuffer{}
 
-	cmd := newForwardCommand(&genericclioptions.IOStreams{
+	cmd := newForwardCommand(genericclioptions.IOStreams{
 		Out:    out,
 		ErrOut: outErr,
 	}, "0.0.0")

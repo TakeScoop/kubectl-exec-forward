@@ -105,7 +105,7 @@ func (c Command) Display(data TemplateData) (string, error) {
 }
 
 // Execute runs the command with the given config and outputs.
-func (c Command) Execute(ctx context.Context, config *Config, args Args, outputs Outputs, streams *genericclioptions.IOStreams) ([]byte, error) {
+func (c Command) Execute(ctx context.Context, config *Config, args Args, outputs Outputs, streams genericclioptions.IOStreams) ([]byte, error) {
 	data := TemplateData{
 		LocalPort: config.LocalPort,
 		Args:      args,

@@ -18,11 +18,11 @@ type Client struct {
 	userConfig clientcmd.ClientConfig
 	factory    cmdutil.Factory
 	timeout    time.Duration
-	streams    *genericclioptions.IOStreams
+	streams    genericclioptions.IOStreams
 }
 
 // NewClient returns an uninitialized forwarding client.
-func NewClient(timeout time.Duration, streams *genericclioptions.IOStreams) *Client {
+func NewClient(timeout time.Duration, streams genericclioptions.IOStreams) *Client {
 	return &Client{
 		timeout:    timeout,
 		streams:    streams,
