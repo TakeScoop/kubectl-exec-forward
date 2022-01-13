@@ -229,47 +229,6 @@ func TestCommandArgs_NoMutate(t *testing.T) {
 	assert.Equal(t, []string{"echo", "{{.Args.foo}}"}, cmd.Command)
 }
 
-func TestParseCommandFromAnnotations(t *testing.T) {
-	t.Parallel()
-
-	cases := []struct {
-		name        string
-		annotations map[string]string
-		expected    Command
-		error       string
-	}{
-		{
-			name:        "basic",
-			annotations: map[string]string{CommandAnnotation: `{"command": ["echo", "hello"]}`},
-			expected:    Command{Command: []string{"echo", "hello"}},
-		},
-		{
-			name:        "invalid json",
-			annotations: map[string]string{CommandAnnotation: ""},
-			error:       "unexpected end of JSON input",
-		},
-	}
-
-	for _, tc := range cases {
-		tc := tc
-
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-
-			actual, err := ParseCommandFromAnnotations(tc.annotations)
-
-			if tc.error != "" {
-				assert.EqualError(t, err, tc.error)
-
-				return
-			}
-
-			require.NoError(t, err)
-			assert.Equal(t, tc.expected, actual)
-		})
-	}
-}
-
 func TestCommandExecute(t *testing.T) {
 	t.Parallel()
 
