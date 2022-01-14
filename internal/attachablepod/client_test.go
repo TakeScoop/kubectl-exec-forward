@@ -47,6 +47,11 @@ func TestClientGet(t *testing.T) {
 					Name: "foo",
 				},
 			},
+			object: &v1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "foo",
+				},
+			},
 		},
 		{
 			name:      "deployment",
@@ -85,6 +90,18 @@ func TestClientGet(t *testing.T) {
 			pod: &v1.Pod{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "foo",
+				},
+			},
+			object: &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "foo",
+				},
+				Spec: appsv1.DeploymentSpec{
+					Selector: &metav1.LabelSelector{
+						MatchLabels: map[string]string{
+							"foo": "bar",
+						},
+					},
 				},
 			},
 		},
@@ -140,7 +157,7 @@ func TestClientGet(t *testing.T) {
 
 			client := New(factory)
 
-			_, pod, err := client.Get(tc.resource, tc.namespace, 0)
+			object, pod, err := client.Get(tc.resource, tc.namespace, 0)
 
 			if tc.error {
 				assert.Error(t, err)
@@ -151,6 +168,7 @@ func TestClientGet(t *testing.T) {
 			require.NoError(t, err)
 
 			assert.Equal(t, tc.pod, pod)
+			assert.Equal(t, tc.object, object)
 		})
 	}
 }
