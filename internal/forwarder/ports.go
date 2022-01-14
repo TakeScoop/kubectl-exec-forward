@@ -10,12 +10,11 @@ import (
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/kubectl/pkg/util"
 )
 
 // Translates the passed runtime object port mappings into ports that target the passed pod.
-func (c Client) translatePorts(obj runtime.Object, pod *corev1.Pod, port string) (string, error) {
+func (c Client) translatePorts(obj interface{}, pod *corev1.Pod, port string) (string, error) {
 	switch t := obj.(type) {
 	case *corev1.Service:
 		return translateServicePortToTargetPort(port, *t, *pod)

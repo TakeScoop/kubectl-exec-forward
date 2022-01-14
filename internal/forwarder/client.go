@@ -6,7 +6,6 @@ import (
 
 	"github.com/takescoop/kubectl-exec-forward/internal/attachablepod"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -20,7 +19,7 @@ type Client struct {
 	restConfig *rest.Config
 	userConfig clientcmd.ClientConfig
 
-	AttachablePodForObjectFn func(resource string, namespace string, timeout time.Duration) (runtime.Object, *v1.Pod, error)
+	AttachablePodForObjectFn func(resource string, namespace string, timeout time.Duration) (interface{}, *v1.Pod, error)
 
 	timeout time.Duration
 	streams genericclioptions.IOStreams
