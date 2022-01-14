@@ -37,8 +37,8 @@ func NewClient(timeout time.Duration, streams genericclioptions.IOStreams) *Clie
 func (c *Client) Init(getter *cmdutil.MatchVersionFlags, overrides clientcmd.ConfigOverrides, version string) error {
 	userAgent := fmt.Sprintf("kubectl-exec-forward/%s", version)
 
-	c.factory = cmdutil.NewFactory(restGetter{
-		restClientGetter: getter,
+	c.factory = cmdutil.NewFactory(userAgentGetter{
+		RESTClientGetter: getter,
 		userAgent:        userAgent,
 	})
 
