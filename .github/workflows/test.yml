@@ -3,7 +3,7 @@ name: Test
 on:
   push:
     branches:
-      - main
+      - master
   pull_request:
 
 jobs:
@@ -37,4 +37,7 @@ jobs:
             ${{ runner.os }}-go-
 
       - name: Test
-        run: go test -race -v ./...
+        run: go test -race -v -coverprofile=coverage.txt -covermode=atomic ./...
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v2

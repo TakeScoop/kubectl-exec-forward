@@ -14,7 +14,7 @@ import (
 	"github.com/howeyc/fsnotify"
 	"github.com/phayes/freeport"
 	"github.com/stretchr/testify/assert"
-	"github.com/takescoop/kubectl-exec-forward/internal/command"
+	"github.com/takescoop/kubectl-exec-forward/internal/annotation"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -91,8 +91,8 @@ func TestRunForwardCommand(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test",
 			Annotations: map[string]string{
-				command.PreAnnotation:     `[{"command": ["echo", "test"]}]`,
-				command.CommandAnnotation: fmt.Sprintf(`{"command": ["touch", %q]}`, doneFile),
+				annotation.PreConnect: `[{"command": ["echo", "test"]}]`,
+				annotation.Command:    fmt.Sprintf(`{"command": ["touch", %q]}`, doneFile),
 			},
 		},
 		Spec: corev1.PodSpec{
