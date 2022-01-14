@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/kubectl/pkg/polymorphichelpers"
 	"k8s.io/kubectl/pkg/scheme"
 )
 
@@ -44,7 +45,7 @@ func (c Client) NewConfig(resource string, portMap string) (*Config, error) {
 		return nil, err
 	}
 
-	pod, err := c.getAttachablePod(obj)
+	pod, err := polymorphichelpers.AttachablePodForObjectFn(c.factory, obj, c.timeout)
 	if err != nil {
 		return nil, err
 	}
