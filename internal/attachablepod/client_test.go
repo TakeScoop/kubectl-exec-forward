@@ -1,4 +1,4 @@
-package podlookup
+package attachablepod
 
 import (
 	"errors"
@@ -17,7 +17,7 @@ import (
 	"k8s.io/kubectl/pkg/scheme"
 )
 
-func TestClientLookup(t *testing.T) {
+func TestClientGet(t *testing.T) {
 	cases := []struct {
 		name string
 
@@ -26,7 +26,8 @@ func TestClientLookup(t *testing.T) {
 		resources map[string]runtime.Object
 		error     bool
 
-		expected *v1.Pod
+		object runtime.Object
+		pod    *v1.Pod
 	}{
 		{
 			name:      "pod",
@@ -41,7 +42,7 @@ func TestClientLookup(t *testing.T) {
 				},
 			},
 
-			expected: &v1.Pod{
+			pod: &v1.Pod{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "foo",
 				},
@@ -81,7 +82,7 @@ func TestClientLookup(t *testing.T) {
 				},
 			},
 
-			expected: &v1.Pod{
+			pod: &v1.Pod{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "foo",
 				},
@@ -139,7 +140,7 @@ func TestClientLookup(t *testing.T) {
 
 			client := New(factory)
 
-			pod, err := client.Lookup(tc.resource, tc.namespace, 0)
+			_, pod, err := client.Get(tc.resource, tc.namespace, 0)
 
 			if tc.error {
 				assert.Error(t, err)
@@ -149,7 +150,7 @@ func TestClientLookup(t *testing.T) {
 
 			require.NoError(t, err)
 
-			assert.Equal(t, tc.expected, pod)
+			assert.Equal(t, tc.pod, pod)
 		})
 	}
 }

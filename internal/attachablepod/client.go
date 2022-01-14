@@ -1,23 +1,24 @@
-package podlookup
+package attachablepod
 
 import (
 	"time"
 
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	cmdutil "k8s.io/kubectl/pkg/cmd/util"
 	"k8s.io/kubectl/pkg/polymorphichelpers"
 	"k8s.io/kubectl/pkg/scheme"
 )
 
-type Client struct {
+type client struct {
 	factory cmdutil.Factory
 }
 
-func New(factory cmdutil.Factory) *Client {
-	return &Client{factory: factory}
+func New(factory cmdutil.Factory) *client {
+	return &client{factory: factory}
 }
 
-func (c *Client) Lookup(resource string, namespace string, timeout time.Duration) (*v1.Pod, error) {
+func (c *client) Get(resource string, namespace string, timeout time.Duration) (runtime.Object, *v1.Pod, error) {
 	obj, err := c.factory.NewBuilder().
 		WithScheme(scheme.Scheme, scheme.Scheme.PrioritizedVersionsAllGroups()...).
 		ContinueOnError().
@@ -27,8 +28,9 @@ func (c *Client) Lookup(resource string, namespace string, timeout time.Duration
 		Do().
 		Object()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return polymorphichelpers.AttachablePodForObjectFn(c.factory, obj, timeout)
+	pod, err := polymorphichelpers.AttachablePodForObjectFn(c.factory, obj, timeout)
+	return obj, pod, err
 }
