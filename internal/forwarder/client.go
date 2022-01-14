@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/takescoop/kubectl-exec-forward/internal/attachablepod"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -16,9 +18,11 @@ type Client struct {
 	clientset  *kubernetes.Clientset
 	restConfig *rest.Config
 	userConfig clientcmd.ClientConfig
-	factory    cmdutil.Factory
-	timeout    time.Duration
-	streams    genericclioptions.IOStreams
+
+	AttachablePodForObjectFn func(resource string, namespace string, timeout time.Duration) (interface{}, *v1.Pod, error)
+
+	timeout time.Duration
+	streams genericclioptions.IOStreams
 }
 
 // NewClient returns an uninitialized forwarding client.
@@ -27,7 +31,6 @@ func NewClient(timeout time.Duration, streams genericclioptions.IOStreams) *Clie
 		timeout:    timeout,
 		streams:    streams,
 		clientset:  nil,
-		factory:    nil,
 		restConfig: nil,
 		userConfig: nil,
 	}
@@ -37,10 +40,12 @@ func NewClient(timeout time.Duration, streams genericclioptions.IOStreams) *Clie
 func (c *Client) Init(getter *cmdutil.MatchVersionFlags, overrides clientcmd.ConfigOverrides, version string) error {
 	userAgent := fmt.Sprintf("kubectl-exec-forward/%s", version)
 
-	c.factory = cmdutil.NewFactory(userAgentGetter{
+	factory := cmdutil.NewFactory(userAgentGetter{
 		RESTClientGetter: getter,
 		userAgent:        userAgent,
 	})
+
+	c.AttachablePodForObjectFn = attachablepod.New(factory).Get
 
 	kc := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 		clientcmd.NewDefaultClientConfigLoadingRules(),

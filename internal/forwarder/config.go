@@ -4,8 +4,6 @@ import (
 	"strconv"
 
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/kubectl/pkg/polymorphichelpers"
-	"k8s.io/kubectl/pkg/scheme"
 )
 
 // Config contains the information required to satisfy a call to Forward.
@@ -33,19 +31,7 @@ func (c Client) NewConfig(resource string, portMap string) (*Config, error) {
 		return nil, err
 	}
 
-	obj, err := c.factory.NewBuilder().
-		WithScheme(scheme.Scheme, scheme.Scheme.PrioritizedVersionsAllGroups()...).
-		ContinueOnError().
-		NamespaceParam(namespace).
-		DefaultNamespace().
-		ResourceNames("pods", resource).
-		Do().
-		Object()
-	if err != nil {
-		return nil, err
-	}
-
-	pod, err := polymorphichelpers.AttachablePodForObjectFn(c.factory, obj, c.timeout)
+	obj, pod, err := c.AttachablePodForObjectFn(resource, namespace, c.timeout)
 	if err != nil {
 		return nil, err
 	}
