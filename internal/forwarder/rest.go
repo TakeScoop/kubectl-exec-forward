@@ -5,17 +5,15 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-type restClientGetter genericclioptions.RESTClientGetter
-
-// restGetter wraps the passed getter, allowing for extended behavior on the interface methods.
-type restGetter struct {
-	restClientGetter
+// userAgentGetter is a RESTClientGetter that adds a user agent to the client.
+type userAgentGetter struct {
+	genericclioptions.RESTClientGetter
 	userAgent string
 }
 
-// ToRESTConfig returns restconfig.
-func (r restGetter) ToRESTConfig() (*rest.Config, error) {
-	rc, err := r.restClientGetter.ToRESTConfig()
+// ToRESTConfig calls the underlying RESTClientGetter and adds the user agent to the rest config.
+func (r userAgentGetter) ToRESTConfig() (*rest.Config, error) {
+	rc, err := r.RESTClientGetter.ToRESTConfig()
 	if err != nil {
 		return nil, err
 	}
