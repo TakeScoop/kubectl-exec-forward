@@ -79,6 +79,7 @@ func newForwardCommand(streams genericclioptions.IOStreams, version string) *cob
 	flags.StringArrayP("arg", "a", []string{}, "key=value arguments to be passed to commands")
 	flags.BoolP("verbose", "v", false, "Whether to write command outputs to console")
 	flags.DurationP("pod-timeout", "t", 500, "Time to wait for an attachable pod to become available")
+	flags.BoolP("persist", "p", false, "Whether to persist the connection after the main command has finished")
 
 	configFlags.AddFlags(cmd.PersistentFlags())
 
