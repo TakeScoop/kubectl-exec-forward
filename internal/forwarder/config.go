@@ -26,12 +26,7 @@ func (c Config) GetLocalPort() (port int, err error) {
 
 // NewConfig interacts with the Kubernetes API to find a pod and ports suitable for forwarding.
 func (c Client) NewConfig(resource string, portMap string) (*Config, error) {
-	namespace, _, err := c.userConfig.Namespace()
-	if err != nil {
-		return nil, err
-	}
-
-	obj, pod, err := c.AttachablePodForObjectFn(resource, namespace, c.timeout)
+	obj, pod, err := c.AttachablePodForObjectFn(resource, c.Namespace, c.timeout)
 	if err != nil {
 		return nil, err
 	}

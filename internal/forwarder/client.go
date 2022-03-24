@@ -9,14 +9,14 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
 )
 
 // Client interfaces with Kubernetes to facilitate a port-forwarding tunnel as well as fetch information about the forwarding target.
 type Client struct {
 	clientset  *kubernetes.Clientset
 	restConfig *rest.Config
-	userConfig clientcmd.ClientConfig
+
+	Namespace string
 
 	AttachablePodForObjectFn func(resource string, namespace string, timeout time.Duration) (interface{}, *v1.Pod, error)
 
@@ -31,7 +31,6 @@ func NewClient(timeout time.Duration, streams genericclioptions.IOStreams) *Clie
 		streams:    streams,
 		clientset:  nil,
 		restConfig: nil,
-		userConfig: nil,
 	}
 }
 
@@ -39,19 +38,24 @@ func NewClient(timeout time.Duration, streams genericclioptions.IOStreams) *Clie
 func (c *Client) Init(getter genericclioptions.RESTClientGetter, version string) error {
 	userAgent := fmt.Sprintf("kubectl-exec-forward/%s", version)
 
-	c.AttachablePodForObjectFn = attachablepod.New(userAgentGetter{
+	getter = userAgentGetter{
 		RESTClientGetter: getter,
 		userAgent:        userAgent,
-	}).Get
+	}
 
-	c.userConfig = getter.ToRawKubeConfigLoader()
+	c.AttachablePodForObjectFn = attachablepod.New(getter).Get
+
+	ns, _, err := getter.ToRawKubeConfigLoader().Namespace()
+	if err != nil {
+		return err
+	}
+
+	c.Namespace = ns
 
 	rc, err := getter.ToRESTConfig()
 	if err != nil {
 		return err
 	}
-
-	rc.UserAgent = userAgent
 
 	c.restConfig = rc
 
