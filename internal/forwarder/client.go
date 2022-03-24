@@ -10,7 +10,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	cmdutil "k8s.io/kubectl/pkg/cmd/util"
 )
 
 // Client interfaces with Kubernetes to facilitate a port-forwarding tunnel as well as fetch information about the forwarding target.
@@ -37,24 +36,17 @@ func NewClient(timeout time.Duration, streams genericclioptions.IOStreams) *Clie
 }
 
 // Init instantiates a Kubernetes client and rest configuration for the forwarding client.
-func (c *Client) Init(getter *cmdutil.MatchVersionFlags, overrides clientcmd.ConfigOverrides, version string) error {
+func (c *Client) Init(getter genericclioptions.RESTClientGetter, version string) error {
 	userAgent := fmt.Sprintf("kubectl-exec-forward/%s", version)
 
-	factory := cmdutil.NewFactory(userAgentGetter{
+	c.AttachablePodForObjectFn = attachablepod.New(userAgentGetter{
 		RESTClientGetter: getter,
 		userAgent:        userAgent,
-	})
+	}).Get
 
-	c.AttachablePodForObjectFn = attachablepod.New(factory).Get
+	c.userConfig = getter.ToRawKubeConfigLoader()
 
-	kc := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
-		clientcmd.NewDefaultClientConfigLoadingRules(),
-		&overrides,
-	)
-
-	c.userConfig = kc
-
-	rc, err := kc.ClientConfig()
+	rc, err := getter.ToRESTConfig()
 	if err != nil {
 		return err
 	}

@@ -11,15 +11,11 @@ import (
 	"github.com/takescoop/kubectl-exec-forward/internal/execforward"
 	"github.com/takescoop/kubectl-exec-forward/internal/forwarder"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
-	"k8s.io/client-go/tools/clientcmd"
-	cmdutil "k8s.io/kubectl/pkg/cmd/util"
 )
 
 // newForwardCommand returns the command for forwarding to Kubernetes resources.
 func newForwardCommand(streams genericclioptions.IOStreams, version string) *cobra.Command {
-	overrides := clientcmd.ConfigOverrides{}
-
-	kubeConfigFlags := genericclioptions.NewConfigFlags(false)
+	configFlags := genericclioptions.NewConfigFlags(false)
 
 	cmd := &cobra.Command{
 		Use:     "kubectl exec-forward TYPE/NAME PORT [options] -- [command...]",
@@ -36,7 +32,7 @@ func newForwardCommand(streams genericclioptions.IOStreams, version string) *cob
 			}
 
 			client := forwarder.NewClient(podTimeout, streams)
-			if err := client.Init(cmdutil.NewMatchVersionFlags(kubeConfigFlags), overrides, version); err != nil {
+			if err := client.Init(configFlags, version); err != nil {
 				return err
 			}
 
@@ -83,9 +79,8 @@ func newForwardCommand(streams genericclioptions.IOStreams, version string) *cob
 	flags.StringArrayP("arg", "a", []string{}, "key=value arguments to be passed to commands")
 	flags.BoolP("verbose", "v", false, "Whether to write command outputs to console")
 	flags.DurationP("pod-timeout", "t", 500, "Time to wait for an attachable pod to become available")
-	flags.BoolP("persist", "p", false, "Whether to persist the connection after the main command has finished")
 
-	clientcmd.BindOverrideFlags(&overrides, cmd.PersistentFlags(), clientcmd.RecommendedConfigOverrideFlags(""))
+	configFlags.AddFlags(cmd.PersistentFlags())
 
 	return cmd
 }
