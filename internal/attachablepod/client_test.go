@@ -59,7 +59,7 @@ func TestClientGet(t *testing.T) {
 			namespace: "test",
 
 			resources: map[string]runtime.Object{
-				"/api/v1/namespaces/test/deployments/foo": &appsv1.Deployment{
+				"/apis/extensions/v1beta1/namespaces/test/deployments/foo": &appsv1.Deployment{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "foo",
 					},
