@@ -14,6 +14,7 @@ import (
 	"github.com/howeyc/fsnotify"
 	"github.com/phayes/freeport"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/takescoop/kubectl-exec-forward/internal/annotation"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -140,14 +141,8 @@ func TestRunForwardCommand(t *testing.T) {
 		assert.NoError(t, watcher.Close())
 	})
 
-	cancelCtx, cancel := context.WithCancel(ctx)
-
-	t.Cleanup(func() {
-		cancel()
-	})
-
 	go func() {
-		if err := cmd.ExecuteContext(cancelCtx); err != nil {
+		if err := cmd.ExecuteContext(ctx); err != nil {
 			errChan <- err
 		}
 	}()
@@ -171,13 +166,13 @@ func TestRunForwardCommand(t *testing.T) {
 	waitForFinish(t, doneChan, errChan)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("http://localhost:%d", localPort), nil)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	httpClient := &http.Client{}
 	resp, err := httpClient.Do(req)
 
-	assert.NoError(t, err)
-	assert.NoError(t, resp.Body.Close())
+	require.NoError(t, err)
+	require.NoError(t, resp.Body.Close())
 
 	assert.Equal(t, 200, resp.StatusCode)
 
