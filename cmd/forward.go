@@ -24,6 +24,8 @@ func newForwardCommand(streams genericclioptions.IOStreams, version string) *cob
 		Version: version,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
+			ctx = signal.NotifyContext(ctx)
+
 			flags := cmd.Flags()
 
 			podTimeout, err := flags.GetDuration("pod-timeout")
@@ -35,9 +37,6 @@ func newForwardCommand(streams genericclioptions.IOStreams, version string) *cob
 			if err := client.Init(configFlags, version); err != nil {
 				return err
 			}
-
-			sigChan := make(chan os.Signal, 1)
-			signal.Notify(sigChan, os.Interrupt)
 
 			cmdArgs, err := parseArgFlag(cmd)
 			if err != nil {
@@ -62,15 +61,7 @@ func newForwardCommand(streams genericclioptions.IOStreams, version string) *cob
 
 			config.Persist = p
 
-			cancelCtx, cancel := context.WithCancel(ctx)
-
-			go func() {
-				<-sigChan
-
-				cancel()
-			}()
-
-			return execforward.Run(cancelCtx, client, config, cmdArgs, args[0], args[1], streams)
+			return execforward.Run(ctx, client, config, cmdArgs, args[0], args[1], streams)
 		},
 	}
 
