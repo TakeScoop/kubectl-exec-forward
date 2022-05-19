@@ -17,5 +17,7 @@ linters:
     - maligned
     - stylecheck
     - varnamelen
+    - exhaustruct
+    - nonamedreturns
 issues:
   exclude-use-default: false
