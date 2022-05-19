@@ -24,8 +24,7 @@ func newForwardCommand(streams genericclioptions.IOStreams, version string) *cob
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 			ctx, cancel := signal.NotifyContext(ctx)
-			// defer cancel()
-			_ = cancel
+			defer cancel()
 
 			flags := cmd.Flags()
 
