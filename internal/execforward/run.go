@@ -82,14 +82,17 @@ func Run(ctx context.Context, client *forwarder.Client, hooksConfig *Config, cli
 		select {
 		case err := <-hookErrChan:
 			stopChan <- struct{}{}
+
 			return err
 		case err := <-fwdErrChan:
 			return err
 		case <-commandDoneChan:
 			stopChan <- struct{}{}
+
 			return nil
 		case <-ctx.Done():
 			stopChan <- struct{}{}
+
 			return nil
 		}
 	}
