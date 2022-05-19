@@ -51,18 +51,19 @@ func Run(ctx context.Context, client *forwarder.Client, hooksConfig *Config, cli
 	readyChan := make(chan forwarder.Connection)
 	commandDoneChan := make(chan bool)
 
-	cancelCtx, cancel := context.WithCancel(ctx)
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
 	go func() {
 		conn := <-readyChan
 
 		commandConfig.LocalPort = conn.Local
 
-		if outputs, err = hooks.Post.Execute(cancelCtx, commandConfig, args, outputs, streams); err != nil {
+		if outputs, err = hooks.Post.Execute(ctx, commandConfig, args, outputs, streams); err != nil {
 			hookErrChan <- err
 		}
 
-		if _, err = hooks.Command.Execute(cancelCtx, commandConfig, args, outputs, streams); err != nil {
+		if _, err = hooks.Command.Execute(ctx, commandConfig, args, outputs, streams); err != nil {
 			hookErrChan <- err
 		}
 
@@ -81,25 +82,14 @@ func Run(ctx context.Context, client *forwarder.Client, hooksConfig *Config, cli
 		select {
 		case err := <-hookErrChan:
 			stopChan <- struct{}{}
-
-			cancel()
-
 			return err
 		case err := <-fwdErrChan:
-			cancel()
-
 			return err
 		case <-commandDoneChan:
 			stopChan <- struct{}{}
-
-			cancel()
-
 			return nil
 		case <-ctx.Done():
 			stopChan <- struct{}{}
-
-			cancel()
-
 			return nil
 		}
 	}
