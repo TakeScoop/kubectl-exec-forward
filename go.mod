@@ -1,6 +1,6 @@
 module github.com/takescoop/kubectl-exec-forward
 
-go 1.18
+go 1.19
 
 require (
 	github.com/howeyc/fsnotify v0.9.0
