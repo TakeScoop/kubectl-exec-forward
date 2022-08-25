@@ -1,3 +1,4 @@
+// Package main is the entrypoint for the exec-forward CLI.
 package main
 
 import (
