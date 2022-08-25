@@ -41,18 +41,17 @@ func splitPort(port string) (local, remote string) {
 func translateServicePortToTargetPort(port string, svc corev1.Service, pod corev1.Pod) (string, error) {
 	localPort, remotePort := splitPort(port)
 
-	// nolint:gosec
-	portnum, err := strconv.Atoi(remotePort)
+	portnum, err := strconv.ParseInt(remotePort, 10, 32)
 	if err != nil {
 		svcPort, err := util.LookupServicePortNumberByName(svc, remotePort)
 		if err != nil {
 			return "", err
 		}
 
-		portnum = int(svcPort)
+		portnum = int64(svcPort)
 
 		if localPort == remotePort {
-			localPort = strconv.Itoa(portnum)
+			localPort = strconv.FormatInt(portnum, 10)
 		}
 	}
 
