@@ -147,6 +147,7 @@ func TestTranslateServicePortToTargetPort(t *testing.T) {
 
 			if tc.error != "" {
 				assert.EqualError(t, err, tc.error)
+
 				return
 			}
 
