@@ -80,7 +80,7 @@ func (c Command) ToCmd(ctx context.Context, data TemplateData) (*exec.Cmd, error
 		return nil, err
 	}
 
-	// nolint:gosec
+	//nolint:gosec
 	return exec.CommandContext(ctx, c.Name(), args...), nil
 }
 
